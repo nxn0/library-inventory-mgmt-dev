@@ -165,7 +165,6 @@ python manage.py createsuperuser
 
 ### 8. Create Templates
 
-You need to create the HTML templates. Here's a base template structure:
 
 **Create `library/templates/library/base.html`:**
 
@@ -295,7 +294,6 @@ Visit: `http://127.0.0.1:8000/`
 
 ## Sample Data
 
-You can add sample data through Django admin or create a management command:
 
 ```bash
 python manage.py shell
@@ -330,7 +328,6 @@ Member.objects.create(
 
 ## Template Examples
 
-For quick implementation, you need minimal templates. Here's what each should contain:
 
 ### Dashboard (dashboard.html)
 - Statistics cards (total resources, members, checked out, overdue)
@@ -354,33 +351,6 @@ For quick implementation, you need minimal templates. Here's what each should co
 - Status filters
 - Check-in buttons for active transactions
 
-## What Your Teammate Can Do
-
-Easy tasks for your teammate:
-1. **Basic HTML templates** - Just tables and forms
-2. **Add Bootstrap styling** - Copy-paste classes
-3. **Create sample data** - Add test resources/members via admin
-4. **Write documentation** - User manual, screenshots
-5. **Testing** - Click through all features, report bugs
-
-## Tips for Success
-
-1. **Start with Admin Panel**: Use Django admin to populate initial data
-2. **Test Each CRUD**: Test Create, Read, Update, Delete for each model
-3. **Keep it Simple**: Don't over-complicate templates
-4. **Use Bootstrap**: Pre-styled components save time
-5. **Git Commits**: Commit after each working feature
-
-## Common Issues & Fixes
-
-**Issue**: Images not showing
-- **Fix**: Check MEDIA_URL and MEDIA_ROOT in settings, ensure URL patterns include static/media files
-
-**Issue**: Form validation errors
-- **Fix**: Check model constraints and form clean methods
-
-**Issue**: Database errors
-- **Fix**: Run `python manage.py makemigrations` and `python manage.py migrate`
 
 ## Grading Points to Hit
 
