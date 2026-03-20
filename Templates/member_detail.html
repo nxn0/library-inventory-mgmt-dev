@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ member.full_name }} - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>{{ member.full_name }}</h1>
+<hr>
+
+<dl class="row">
+    <dt class="col-md-4">Member ID</dt>
+    <dd class="col-md-8">{{ member.member_id }}</dd>
+    
+    <dt class="col-md-4">First Name</dt>
+    <dd class="col-md-8">{{ member.first_name }}</dd>
+    
+    <dt class="col-md-4">Last Name</dt>
+    <dd class="col-md-8">{{ member.last_name }}</dd>
+    
+    <dt class="col-md-4">Email</dt>
+    <dd class="col-md-8">{{ member.email }}</dd>
+    
+    <dt class="col-md-4">Phone</dt>
+    <dd class="col-md-8">{{ member.phone|default:'N/A' }}</dd>
+    
+    <dt class="col-md-4">Type</dt>
+    <dd class="col-md-8">{{ member.get_member_type_display }}</dd>
+    
+    <dt class="col-md-4">Department</dt>
+    <dd class="col-md-8">{{ member.department|default:'N/A' }}</dd>
+    
+    <dt class="col-md-4">Join Date</dt>
+    <dd class="col-md-8">{{ member.join_date|date:'M d, Y' }}</dd>
+    
+    <dt class="col-md-4">Status</dt>
+    <dd class="col-md-8">
+        {% if member.is_active %}
+            <span class="badge bg-success">Active</span>
+        {% else %}
+            <span class="badge bg-danger">Inactive</span>
+        {% endif %}
+    </dd>
+</dl>
+
+<div class="mt-3">
+    <a href="/members/{{ member.pk }}/edit/" class="btn btn-warning">Edit</a>
+    <a href="/members/{{ member.pk }}/delete/" class="btn btn-danger">Delete</a>
+    <a href="/members/" class="btn btn-secondary">Back to List</a>
+</div>
+
+<hr>
+
+<h3>Checkout History</h3>
+{% if transactions %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Resource</th>
+                <th>Checkout Date</th>
+                <th>Due Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.resource.title }}</td>
+                    <td>{{ transaction.checkout_date|date:'M d, Y' }}</td>
+                    <td>{{ transaction.due_date|date:'M d, Y' }}</td>
+                    <td>{{ transaction.return_date|date:'M d, Y'|default:'Pending' }}</td>
+                    <td><span class="badge bg-info">{{ transaction.status }}</span></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No checkout history</p>
+{% endif %}
+{% endblock %}

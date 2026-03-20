@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Resources - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Resources</h1>
+<hr>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="get" class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search resources..." value="{{ search_query }}">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+    </div>
+    <div class="col-md-3">
+        <a href="/resources/create/" class="btn btn-success w-100">➕ Add New Resource</a>
+    </div>
+</div>
+
+{% if resources %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Author</th>
+                <th>Total</th>
+                <th>Available</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resource in resources %}
+                <tr>
+                    <td>{{ resource.title }}</td>
+                    <td>{{ resource.resource_id }}</td>
+                    <td>{{ resource.category.name|default:'N/A' }}</td>
+                    <td>{{ resource.author|default:'N/A' }}</td>
+                    <td>{{ resource.total_quantity }}</td>
+                    <td>{{ resource.available_quantity }}</td>
+                    <td>
+                        {% if resource.status == 'available' %}
+                            <span class="badge bg-success">Available</span>
+                        {% elif resource.status == 'unavailable' %}
+                            <span class="badge bg-warning">Unavailable</span>
+                        {% elif resource.status == 'damaged' %}
+                            <span class="badge bg-danger">Damaged</span>
+                        {% else %}
+                            <span class="badge bg-dark">{{ resource.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/resources/{{ resource.pk }}/" class="btn btn-sm btn-info">View</a>
+                        <a href="/resources/{{ resource.pk }}/edit/" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/resources/{{ resource.pk }}/delete/" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No resources found.</p>
+{% endif %}
+{% endblock %}

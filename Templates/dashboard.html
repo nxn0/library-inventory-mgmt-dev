@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<hr>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_resources }}</div>
+            <div class="stat-label">Total Resources</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_members }}</div>
+            <div class="stat-label">Active Members</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ checked_out }}</div>
+            <div class="stat-label">Checked Out</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="color: #e74c3c;">{{ overdue }}</div>
+            <div class="stat-label">Overdue Items</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Low Stock Items</h3>
+        {% if low_stock %}
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Available</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock %}
+                        <tr>
+                            <td><a href="/resources/{{ item.pk }}/">{{ item.title }}</a></td>
+                            <td><span class="badge bg-warning">{{ item.available_quantity }}/{{ item.total_quantity }}</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No low stock items</p>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6">
+        <h3>Popular Categories</h3>
+        {% if popular_categories %}
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Resources</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in popular_categories %}
+                        <tr>
+                            <td>{{ cat.name }}</td>
+                            <td><span class="badge bg-primary">{{ cat.resource_count }}</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No categories yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>Recent Transactions</h3>
+        {% if recent_transactions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Resource</th>
+                        <th>Member</th>
+                        <th>Checkout Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trans in recent_transactions %}
+                        <tr>
+                            <td>{{ trans.resource.title }}</td>
+                            <td>{{ trans.member.full_name }}</td>
+                            <td>{{ trans.checkout_date|date:"M d, Y" }}</td>
+                            <td>{{ trans.due_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if trans.status == 'active' %}
+                                    {% if trans.is_overdue %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Active</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-success">{{ trans.status|title }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No transactions yet</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

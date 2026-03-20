@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout Resource - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Checkout Resource</h1>
+<hr>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post" class="was-validated">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="invalid-feedback d-block">{{ field.errors|join:', ' }}</div>
+                    {% endif %}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Checkout</button>
+                <a href="/transactions/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

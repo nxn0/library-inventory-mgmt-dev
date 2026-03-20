@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Transactions</h1>
+<hr>
+
+<div class="mb-3">
+    <a href="/checkout/" class="btn btn-primary me-2">➕ New Checkout</a>
+    <a href="/return/" class="btn btn-success">↩️ Return Item</a>
+</div>
+
+{% if transactions %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Resource</th>
+                <th>Member</th>
+                <th>Checkout Date</th>
+                <th>Due Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.resource.title }}</td>
+                    <td>{{ transaction.member.full_name }}</td>
+                    <td>{{ transaction.checkout_date|date:'M d, Y' }}</td>
+                    <td>{{ transaction.due_date|date:'M d, Y' }}</td>
+                    <td>{{ transaction.return_date|date:'M d, Y'|default:'Pending' }}</td>
+                    <td>
+                        {% if transaction.status == 'active' %}
+                            {% if transaction.is_overdue %}
+                                <span class="badge bg-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge bg-info">Active</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-success">{{ transaction.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No transactions yet</p>
+{% endif %}
+{% endblock %}

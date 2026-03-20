@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Return Resource - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Return Resource</h1>
+<hr>
+
+<div class="row">
+    <div class="col-md-8">
+        {% if transactions %}
+            <form method="post" class="was-validated">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="transaction_id" class="form-label">Select Checked Out Item to Return</label>
+                    <select name="transaction_id" id="transaction_id" class="form-select" required>
+                        <option value="">-- Select an item --</option>
+                        {% for transaction in transactions %}
+                            <option value="{{ transaction.pk }}">
+                                {{ transaction.resource.title }} ({{ transaction.member.full_name }}) - Due: {{ transaction.due_date|date:'M d, Y' }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-success">Return Item</button>
+                    <a href="/transactions/" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        {% else %}
+            <div class="alert alert-info">No active checkouts to return</div>
+            <a href="/transactions/" class="btn btn-secondary">Back</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

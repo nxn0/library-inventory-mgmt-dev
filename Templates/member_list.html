@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Members - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Members</h1>
+<hr>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="get" class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search members..." value="{{ search_query }}">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+    </div>
+    <div class="col-md-3">
+        <a href="/members/create/" class="btn btn-success w-100">➕ Add New Member</a>
+    </div>
+</div>
+
+{% if members %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Member ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Join Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.member_id }}</td>
+                    <td>{{ member.full_name }}</td>
+                    <td>{{ member.email }}</td>
+                    <td>{{ member.get_member_type_display }}</td>
+                    <td>
+                        {% if member.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ member.join_date|date:'M d, Y' }}</td>
+                    <td>
+                        <a href="/members/{{ member.pk }}/" class="btn btn-sm btn-info">View</a>
+                        <a href="/members/{{ member.pk }}/edit/" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/members/{{ member.pk }}/delete/" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No members found.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Categories</h1>
+<hr>
+
+<div class="mb-3">
+    <a href="/categories/create/" class="btn btn-success">➕ Add New Category</a>
+</div>
+
+{% if categories %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Category Name</th>
+                <th>Resources</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td><span class="badge bg-primary">{{ category.resource_count }}</span></td>
+                    <td>{{ category.description|truncuewords:10|default:'N/A' }}</td>
+                    <td>
+                        <a href="/categories/{{ category.pk }}/edit/" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/categories/{{ category.pk }}/delete/" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No categories found.</p>
+{% endif %}
+{% endblock %}
