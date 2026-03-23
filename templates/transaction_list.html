@@ -27,7 +27,7 @@
             {% for transaction in transactions %}
                 <tr>
                     <td>{{ transaction.resource.title }}</td>
-                    <td>{{ transaction.member.full_name }}</td>
+                    <td>Member {{ transaction.member.member_id }}</td>
                     <td>{{ transaction.checkout_date|date:'M d, Y' }}</td>
                     <td>{{ transaction.due_date|date:'M d, Y' }}</td>
                     <td>{{ transaction.return_date|date:'M d, Y'|default:'Pending' }}</td>

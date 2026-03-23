@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Complete Registration - Library Inventory Management{% endblock %}
+
+{% block content %}
+<h1>Complete Member Registration</h1>
+<hr>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Browser Fingerprint Collection</h5>
+            </div>
+            <div class="card-body">
+                <p>We need to collect your browser fingerprint to uniquely identify you as a library member.</p>
+                <p>This fingerprint is based on your browser configuration and is used for secure identification.</p>
+                
+                <div id="fingerprint-status" class="alert alert-info">
+                    Collecting fingerprint data...
+                </div>
+                
+                <form id="fingerprint-form" method="post" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="fingerprint_data" id="fingerprint-data">
+                    <button type="submit" class="btn btn-primary" id="register-btn">Complete Registration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>What data is collected?</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>User agent string</li>
+                    <li>Screen resolution</li>
+                    <li>Timezone</li>
+                    <li>Language preferences</li>
+                    <li>Installed plugins</li>
+                    <li>Canvas fingerprint</li>
+                    <li>WebGL information</li>
+                </ul>
+                <p class="text-muted small">All data is hashed before storage. No personal information is collected.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Browser fingerprinting function
+async function collectFingerprint() {
+    const fingerprint = {};
+    
+    // User agent
+    fingerprint.userAgent = navigator.userAgent;
+    
+    // Screen properties
+    fingerprint.screenResolution = `${screen.width}x${screen.height}`;
+    fingerprint.screenColorDepth = screen.colorDepth;
+    fingerprint.screenPixelRatio = window.devicePixelRatio;
+    
+    // Timezone
+    fingerprint.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    fingerprint.timezoneOffset = new Date().getTimezoneOffset();
+    
+    // Language
+    fingerprint.language = navigator.language;
+    fingerprint.languages = navigator.languages;
+    
+    // Platform
+    fingerprint.platform = navigator.platform;
+    
+    // Cookies enabled
+    fingerprint.cookiesEnabled = navigator.cookieEnabled;
+    
+    // Do Not Track
+    fingerprint.doNotTrack = navigator.doNotTrack;
+    
+    // Plugins
+    fingerprint.plugins = [];
+    for (let i = 0; i < navigator.plugins.length; i++) {
+        fingerprint.plugins.push(navigator.plugins[i].name);
+    }
+    
+    // Canvas fingerprint
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Fingerprint', 2, 2);
+        fingerprint.canvasFingerprint = canvas.toDataURL();
+    } catch (e) {
+        fingerprint.canvasFingerprint = 'error';
+    }
+    
+    // WebGL fingerprint
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                fingerprint.webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                fingerprint.webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        }
+    } catch (e) {
+        fingerprint.webglVendor = 'error';
+        fingerprint.webglRenderer = 'error';
+    }
+    
+    // Hardware concurrency
+    fingerprint.hardwareConcurrency = navigator.hardwareConcurrency;
+    
+    // Device memory (if available)
+    if ('deviceMemory' in navigator) {
+        fingerprint.deviceMemory = navigator.deviceMemory;
+    }
+    
+    return JSON.stringify(fingerprint);
+}
+
+// Collect fingerprint and submit
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const fingerprintData = await collectFingerprint();
+        document.getElementById('fingerprint-data').value = fingerprintData;
+        document.getElementById('fingerprint-status').className = 'alert alert-success';
+        document.getElementById('fingerprint-status').textContent = 'Fingerprint collected successfully! Click "Complete Registration" to finish.';
+        document.getElementById('fingerprint-form').style.display = 'block';
+    } catch (error) {
+        document.getElementById('fingerprint-status').className = 'alert alert-danger';
+        document.getElementById('fingerprint-status').textContent = 'Error collecting fingerprint data. Please try again.';
+        console.error('Fingerprint collection error:', error);
+    }
+});
+</script>
+{% endblock %}

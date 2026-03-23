@@ -60,21 +60,10 @@ class Resource(models.Model):
 
 
 class Member(models.Model):
-    """Library members"""
-    MEMBER_TYPE_CHOICES = [
-        ('student', 'Student'),
-        ('faculty', 'Faculty'),
-        ('staff', 'Staff'),
-        ('external', 'External'),
-    ]
-
+    """Library members identified by browser fingerprint"""
+    
     member_id = models.CharField(max_length=50, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20, blank=True)
-    member_type = models.CharField(max_length=20, choices=MEMBER_TYPE_CHOICES, default='student')
-    department = models.CharField(max_length=100, blank=True)
+    hashed_fingerprint = models.CharField(max_length=128, unique=True, null=True, blank=True, help_text="SHA-256 hash of browser fingerprint data")
     join_date = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     
@@ -82,14 +71,17 @@ class Member(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['last_name', 'first_name']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.member_id})"
+        return f"Member {self.member_id}"
 
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+    def save(self, *args, **kwargs):
+        if not self.member_id:
+            # Generate a unique member ID
+            import uuid
+            self.member_id = str(uuid.uuid4())[:8].upper()
+        super().save(*args, **kwargs)
 
 
 class Transaction(models.Model):
@@ -115,7 +107,7 @@ class Transaction(models.Model):
         ordering = ['-checkout_date']
 
     def __str__(self):
-        return f"{self.resource.title} - {self.member.full_name}"
+        return f"{self.resource.title} - Member {self.member.member_id}"
 
     @property
     def is_overdue(self):

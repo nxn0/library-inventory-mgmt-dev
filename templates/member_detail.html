@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ member.full_name }} - Library Inventory Management{% endblock %}
+{% block title %}Member {{ member.member_id }} - Library Inventory Management{% endblock %}
 
 {% block content %}
-<h1>{{ member.full_name }}</h1>
+<h1>Member {{ member.member_id }}</h1>
 <hr>
 
 <dl class="row">

@@ -18,7 +18,7 @@
                         <option value="">-- Select an item --</option>
                         {% for transaction in transactions %}
                             <option value="{{ transaction.pk }}">
-                                {{ transaction.resource.title }} ({{ transaction.member.full_name }}) - Due: {{ transaction.due_date|date:'M d, Y' }}
+                                {{ transaction.resource.title }} (Member {{ transaction.member.member_id }}) - Due: {{ transaction.due_date|date:'M d, Y' }}
                             </option>
                         {% endfor %}
                     </select>

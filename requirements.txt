@@ -3,3 +3,4 @@ Pillow
 python-dateutil
 pytz
 sqlparse
+qrcode[pil]

@@ -185,18 +185,73 @@ def member_detail(request, pk):
 
 
 def member_create(request):
-    """Create new member"""
-    if request.method == 'POST':
-        form = MemberForm(request.POST)
-        if form.is_valid():
-            member = form.save()
-            messages.success(request, f'Member "{member.full_name}" created successfully!')
-            return redirect('member_detail', pk=member.pk)
-    else:
-        form = MemberForm()
+    """Generate QR code for member registration"""
+    import qrcode
+    import io
+    import base64
     
-    context = {'form': form, 'action': 'Create'}
-    return render(request, 'member_form.html', context)
+    # Generate a unique registration token
+    import uuid
+    token = str(uuid.uuid4())
+    
+    # Store token in session for verification
+    request.session['registration_token'] = token
+    
+    # Create QR code with URL to registration page
+    registration_url = request.build_absolute_uri(f'/members/register/{token}/')
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(registration_url)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill='black', back_color='white')
+    
+    # Convert to base64 for display in template
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    
+    context = {
+        'qr_code': img_str,
+        'registration_url': registration_url,
+        'token': token
+    }
+    return render(request, 'member_register.html', context)
+
+
+def member_register(request, token):
+    """Handle fingerprint-based member registration"""
+    # Verify token
+    if request.session.get('registration_token') != token:
+        messages.error(request, 'Invalid registration token.')
+        return redirect('member_list')
+    
+    if request.method == 'POST':
+        fingerprint_data = request.POST.get('fingerprint_data')
+        if fingerprint_data:
+            import hashlib
+            import json
+            
+            # Hash the fingerprint data
+            hashed_fingerprint = hashlib.sha256(fingerprint_data.encode()).hexdigest()
+            
+            # Check if member already exists
+            if Member.objects.filter(hashed_fingerprint=hashed_fingerprint).exists():
+                messages.warning(request, 'Member with this fingerprint already exists.')
+                return redirect('member_list')
+            
+            # Create new member
+            member = Member.objects.create(hashed_fingerprint=hashed_fingerprint)
+            messages.success(request, f'Member {member.member_id} registered successfully!')
+            
+            # Clear session token
+            del request.session['registration_token']
+            
+            return redirect('member_detail', pk=member.pk)
+        else:
+            messages.error(request, 'Fingerprint data is required.')
+    
+    context = {'token': token}
+    return render(request, 'member_fingerprint.html', context)
 
 
 def member_edit(request, pk):
@@ -207,7 +262,7 @@ def member_edit(request, pk):
         form = MemberForm(request.POST, instance=member)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Member "{member.full_name}" updated successfully!')
+            messages.success(request, f'Member {member.member_id} updated successfully!')
             return redirect('member_detail', pk=member.pk)
     else:
         form = MemberForm(instance=member)
@@ -221,7 +276,7 @@ def member_delete(request, pk):
     member = get_object_or_404(Member, pk=pk)
     
     if request.method == 'POST':
-        name = member.full_name
+        name = f"Member {member.member_id}"
         member.delete()
         messages.success(request, f'Member "{name}" deleted successfully!')
         return redirect('member_list')
@@ -311,7 +366,7 @@ def checkout_create(request):
                 resource.status = 'unavailable'
             resource.save()
             
-            messages.success(request, f'Successfully checked out "{resource.title}" to {member.full_name}')
+            messages.success(request, f'Successfully checked out "{resource.title}" to Member {member.member_id}')
             return redirect('transaction_list')
     else:
         form = CheckoutForm()

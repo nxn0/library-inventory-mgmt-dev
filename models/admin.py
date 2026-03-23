@@ -39,25 +39,22 @@ class ResourceAdmin(admin.ModelAdmin):
 
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ['member_id', 'full_name', 'email', 'member_type', 'is_active', 'join_date']
-    list_filter = ['member_type', 'is_active', 'join_date']
-    search_fields = ['member_id', 'first_name', 'last_name', 'email']
+    list_display = ['member_id', 'hashed_fingerprint', 'is_active', 'join_date', 'created_at']
+    list_filter = ['is_active', 'join_date']
+    search_fields = ['member_id', 'hashed_fingerprint']
     list_editable = ['is_active']
-    ordering = ['last_name', 'first_name']
+    ordering = ['-created_at']
     
     fieldsets = (
-        ('Personal Information', {
-            'fields': ('member_id', 'first_name', 'last_name', 'email', 'phone')
-        }),
-        ('Membership', {
-            'fields': ('member_type', 'department', 'join_date', 'is_active')
+        ('Member Information', {
+            'fields': ('member_id', 'hashed_fingerprint', 'is_active', 'join_date')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['hashed_fingerprint', 'created_at', 'updated_at']
 
 
 @admin.register(Transaction)

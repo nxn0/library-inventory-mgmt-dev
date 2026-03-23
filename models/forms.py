@@ -53,21 +53,12 @@ class CategoryForm(forms.ModelForm):
 
 
 class MemberForm(forms.ModelForm):
-    """Form for creating/updating members"""
+    """Form for creating/updating members (now only for editing active status)"""
     class Meta:
         model = Member
-        fields = [
-            'member_id', 'first_name', 'last_name', 'email', 
-            'phone', 'member_type', 'department', 'is_active'
-        ]
+        fields = ['member_id', 'is_active']
         widgets = {
-            'member_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Unique member ID'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number'}),
-            'member_type': forms.Select(attrs={'class': 'form-control'}),
-            'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department'}),
+            'member_id': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -122,22 +113,12 @@ class SearchForm(forms.Form):
     )
 
 class MemberForm(forms.ModelForm):
-    """Form for creating/updating members"""
+    """Form for creating/updating members (now only for editing active status)"""
     class Meta:
         model = Member
-        fields = [
-            'member_id', 'first_name', 'last_name', 'email', 
-            'phone', 'member_type', 'department', 'is_active'
-        ]
+        fields = ['member_id', 'is_active']
         widgets = {
-            'member_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Unique member ID'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number'}),
-            'member_type': forms.Select(attrs={'class': 'form-control'}),
-            'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department'}),
-            'join_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'member_id': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

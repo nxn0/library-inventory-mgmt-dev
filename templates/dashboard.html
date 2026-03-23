@@ -101,7 +101,7 @@
                     {% for trans in recent_transactions %}
                         <tr>
                             <td>{{ trans.resource.title }}</td>
-                            <td>{{ trans.member.full_name }}</td>
+                            <td>Member {{ trans.member.member_id }}</td>
                             <td>{{ trans.checkout_date|date:"M d, Y" }}</td>
                             <td>{{ trans.due_date|date:"M d, Y" }}</td>
                             <td>
