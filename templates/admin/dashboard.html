@@ -1,0 +1,177 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard - Admin Panel{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <!-- Total Users -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ total_users }}</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <i class="bi bi-people-fill" style="font-size: 2rem; color: #667eea; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">Registered in system</small>
+            </div>
+        </div>
+        
+        <!-- Total Books -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ total_books }}</div>
+                        <div class="stat-label">Digital Books</div>
+                    </div>
+                    <i class="bi bi-book-fill" style="font-size: 2rem; color: #764ba2; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">Uploaded by users</small>
+            </div>
+        </div>
+        
+        <!-- Pending Verification -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value" style="color: #ffc107;">{{ pending_books }}</div>
+                        <div class="stat-label">Pending Verification</div>
+                    </div>
+                    <i class="bi bi-hourglass-split" style="font-size: 2rem; color: #ffc107; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">Awaiting admin review</small>
+            </div>
+        </div>
+        
+        <!-- Outstanding Fines -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value" style="color: #dc3545;">₹{{ total_fines }}</div>
+                        <div class="stat-label">Outstanding Fines</div>
+                    </div>
+                    <i class="bi bi-cash" style="font-size: 2rem; color: #dc3545; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">Unpaid fines</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'admin_user_books' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-book"></i> Verify Books
+                        </a>
+                        <a href="{% url 'admin_manage_users' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-x"></i> Manage Users
+                        </a>
+                        <a href="{% url 'admin_manage_fines' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-receipt"></i> Manage Fines
+                        </a>
+                        <a href="{% url 'admin_overdue_books' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Overdue Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </h5>
+                    {% if recent_activity %}
+                        <div class="activity-feed">
+                            {% for activity in recent_activity %}
+                                <div class="mb-3 pb-3 border-bottom">
+                                    <small class="text-muted">{{ activity.timestamp|date:"M d, H:i" }}</small>
+                                    <div>{{ activity.message }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No recent activity</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-heart-pulse"></i> System Health
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Database Status</span>
+                                    <span class="badge bg-success">Operational</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Storage Usage</span>
+                                    <span class="badge bg-info">45%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: 45%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>User Sessions</span>
+                                    <span class="badge bg-primary">{{ active_sessions }}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .activity-feed {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: box-shadow 0.3s;
+    }
+</style>
+{% endblock %}

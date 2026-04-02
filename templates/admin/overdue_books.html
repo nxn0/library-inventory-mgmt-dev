@@ -1,0 +1,266 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Overdue Books - Admin Panel{% endblock %}
+{% block page_title %}Overdue Books Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Alert -->
+    {% if urgent_books %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> 
+        <strong>{{ urgent_books|length }} book(s)</strong> are overdue for more than 30 days!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    
+    <!-- Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search by title or member..." 
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="severity">
+                        <option value="">All Books</option>
+                        <option value="urgent" {% if severity == 'urgent' %}selected{% endif %}>Urgent (>30 days)</option>
+                        <option value="severe" {% if severity == 'severe' %}selected{% endif %}>Severe (>15 days)</option>
+                        <option value="mild" {% if severity == 'mild' %}selected{% endif %}>Mild (8-15 days)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending Recovery</option>
+                        <option value="recovered" {% if status == 'recovered' %}selected{% endif %}>Recovered</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Overdue Books Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Member</th>
+                            <th>Due Date</th>
+                            <th>Days Overdue</th>
+                            <th>Severity</th>
+                            <th>Member Info</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for overdue in overdue_books %}
+                        <tr class="{% if overdue.days_overdue > 30 %}table-danger{% elif overdue.days_overdue > 15 %}table-warning{% endif %}">
+                            <td>
+                                <strong>{{ overdue.title|truncatewords:5 }}</strong>
+                            </td>
+                            <td>
+                                {{ overdue.member_name }}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ overdue.due_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <strong style="font-size: 1.1rem;">{{ overdue.days_overdue }} days</strong>
+                            </td>
+                            <td>
+                                {% if overdue.days_overdue > 30 %}
+                                    <span class="badge bg-danger">URGENT</span>
+                                {% elif overdue.days_overdue > 15 %}
+                                    <span class="badge bg-warning">SEVERE</span>
+                                {% else %}
+                                    <span class="badge bg-info">MILD</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    <strong>Email:</strong> {{ overdue.member_email|default:"N/A" }}<br>
+                                    <strong>Phone:</strong> {{ overdue.member_phone|default:"N/A" }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if overdue.is_recovered %}
+                                    <span class="badge bg-success">RECOVERED</span>
+                                    <br><small class="text-muted">{{ overdue.recovered_date|date:"M d, Y" }}</small>
+                                {% else %}
+                                    <span class="badge bg-secondary">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View Details -->
+                                    <button class="btn btn-outline-info" data-bs-toggle="modal" 
+                                            data-bs-target="#overdueModal{{ overdue.id }}"
+                                            title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    
+                                    {% if not overdue.is_recovered %}
+                                    <!-- Mark as Recovered -->
+                                    <form method="POST" action="{% url 'admin_mark_recovered' overdue.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success"
+                                                title="Mark as Recovered"
+                                                onclick="return confirm('Mark this book as recovered?');">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Send Reminder -->
+                                    <form method="POST" action="{% url 'admin_send_reminder' overdue.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-warning"
+                                                title="Send Reminder">
+                                            <i class="bi bi-bell"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Overdue Details Modal -->
+                        <div class="modal fade" id="overdueModal{{ overdue.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Overdue Book Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <strong>Book:</strong><br>
+                                                <span style="font-size: 1.1rem;">{{ overdue.title }}</span><br>
+                                                <small class="text-muted">Author: {{ overdue.author|default:"Unknown" }}</small>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Member:</strong><br>
+                                                {{ overdue.member_name }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Member ID:</strong><br>
+                                                {{ overdue.member_id|default:"N/A" }}
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Due Date:</strong><br>
+                                                {{ overdue.due_date|date:"M d, Y" }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Days Overdue:</strong><br>
+                                                <strong style="color: #dc3545; font-size: 1.2rem;">
+                                                    {{ overdue.days_overdue }} days
+                                                </strong>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Email:</strong><br>
+                                                {{ overdue.member_email|default:"Not provided" }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Phone:</strong><br>
+                                                {{ overdue.member_phone|default:"Not provided" }}
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <strong>Status:</strong><br>
+                                                {% if overdue.is_recovered %}
+                                                    <span class="badge bg-success">RECOVERED</span>
+                                                    <br><small class="text-muted">Recovered on {{ overdue.recovered_date|date:"M d, Y H:i" }}</small>
+                                                {% else %}
+                                                    <span class="badge bg-danger">PENDING RECOVERY</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No overdue books found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+</style>
+{% endblock %}

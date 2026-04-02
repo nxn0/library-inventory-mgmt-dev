@@ -1,0 +1,162 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Login - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <h1 class="card-title text-center mb-4">Welcome to Library</h1>
+                    <p class="text-center text-muted mb-4">Choose your login method</p>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Login Method Selection -->
+                        <div class="mb-4">
+                            <p class="fw-bold mb-3">Select Login Method:</p>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="login_method" 
+                                       id="method_library_id" value="library_id" checked 
+                                       onchange="toggleFields()">
+                                <label class="form-check-label" for="method_library_id">
+                                    Library/Student ID
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="login_method" 
+                                       id="method_username" value="username" 
+                                       onchange="toggleFields()">
+                                <label class="form-check-label" for="method_username">
+                                    Username + Password
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="login_method" 
+                                       id="method_credentials" value="credentials" 
+                                       onchange="toggleFields()">
+                                <label class="form-check-label" for="method_credentials">
+                                    Name + Phone + Password (Sign Up)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Library ID Section -->
+                        <div id="library_id_section" class="mb-3">
+                            <label for="id_library_id" class="form-label">Library/Student ID</label>
+                            <input type="text" name="library_id" id="id_library_id" 
+                                   class="form-control" placeholder="Enter your ID" required>
+                            <small class="text-muted">Your unique library identification number</small>
+                        </div>
+
+                        <div id="common_username_section" class="mb-3" style="display: none;">
+                            <label for="id_optional_username" class="form-label">Preferred Username (optional)</label>
+                            <input type="text" name="optional_username" id="id_optional_username" 
+                                   class="form-control" placeholder="Set username for Library ID sign-in">
+                            <small class="text-muted">Leave blank to auto-generate when you login with Library ID.</small>
+                        </div>
+
+                        <div id="username_login_section" style="display: none;">
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">Username</label>
+                                <input type="text" name="username" id="id_username" 
+                                       class="form-control" placeholder="Enter your username">
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_password" class="form-label">Password</label>
+                                <input type="password" name="password" id="id_password" 
+                                       class="form-control" placeholder="Enter your password">
+                            </div>
+                            <small class="text-muted">Login with your assigned username/password (or admin pass: admin/12345)</small>
+                        </div>
+
+                        <div id="credentials_section" style="display: none;">
+                            <div class="mb-3">
+                                <label for="id_user_name" class="form-label">Full Name</label>
+                                <input type="text" name="user_name" id="id_user_name" 
+                                       class="form-control" placeholder="Your full name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_user_phone" class="form-label">Phone Number</label>
+                                <input type="tel" name="user_phone" id="id_user_phone" 
+                                       class="form-control" placeholder="Your phone number">
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_credentials" class="form-label">Password</label>
+                                <input type="password" name="credentials" id="id_credentials" 
+                                       class="form-control" placeholder="Create a password">
+                                <small class="text-muted">Your information will be encrypted for privacy.</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Error Display -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-4">
+                            <span id="submit_text">Login with ID</span>
+                        </button>
+                        
+                        <!-- Info Message -->
+                        <div class="alert alert-info mt-4 small">
+                            <strong>Privacy First:</strong> Your data is encrypted using industry-standard AES-256 encryption. 
+                            We use anonymous session IDs to track your activity without storing personally identifiable information.
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Info Card -->
+            <div class="card mt-3">
+                <div class="card-body small">
+                    <h6 class="card-title">Need Help?</h6>
+                    <p class="mb-2"><strong>Library ID:</strong> Your institutional identification number</p>
+                    <p class="mb-2"><strong>Credentials Method:</strong> Create a new account using your name and phone number</p>
+                    <p>Your session will be remembered using browser fingerprinting. Inactive accounts are cleared after 30 days.</p>
+                    <p class="mt-2">New user? <a href="{% url 'user_register' %}">Create an account</a> and receive an auto-generated username.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const method = document.querySelector('input[name="login_method"]:checked').value;
+    const librarySection = document.getElementById('library_id_section');
+    const usernameSection = document.getElementById('username_login_section');
+    const credentialsSection = document.getElementById('credentials_section');
+    const optionalUsername = document.getElementById('common_username_section');
+    const submitText = document.getElementById('submit_text');
+
+    librarySection.style.display = 'none';
+    usernameSection.style.display = 'none';
+    credentialsSection.style.display = 'none';
+    optionalUsername.style.display = 'none';
+
+    if (method === 'library_id') {
+        librarySection.style.display = 'block';
+        optionalUsername.style.display = 'block';
+        submitText.textContent = 'Login with ID';
+    } else if (method === 'username') {
+        usernameSection.style.display = 'block';
+        submitText.textContent = 'Login with Username';
+    } else if (method === 'credentials') {
+        credentialsSection.style.display = 'block';
+        submitText.textContent = 'Create Account';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFields();
+});
+</script>
+{% endblock %}

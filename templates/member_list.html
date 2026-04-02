@@ -14,7 +14,15 @@
         </form>
     </div>
     <div class="col-md-3">
-        <a href="/members/create/" class="btn btn-success w-100">+ Add New Member</a>
+        <div class="dropdown">
+            <button class="btn btn-success dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                + Add New Member
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/members/create/">📝 Manual Registration</a></li>
+                <li><a class="dropdown-item" href="/members/create/?method=qr">📱 QR Code Registration</a></li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -35,7 +43,7 @@
             {% for member in members %}
                 <tr>
                     <td>{{ member.member_id }}</td>
-                    <td>Member {{ member.member_id }}</td>
+                    <td>{{ member.full_name }}</td>
                     <td>{{ member.email }}</td>
                     <td>{{ member.get_member_type_display }}</td>
                     <td>

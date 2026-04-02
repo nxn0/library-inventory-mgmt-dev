@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_ccfa^l^czflmfsb(s-&s1cn$77=!_x+i+bw17d=xfxf_am-a_'
+SECRET_KEY = os.environ.get('SECRET_KEY')
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# QR Code base URL for external device access
+# Set this to your public IP/domain when port forwarding
+# Example: 'http://192.168.1.100:8000' or 'https://yourdomain.com'
+QR_BASE_URL = 'http://localhost:8000'  # Change this for external access
 
 
 # Application definition
@@ -121,3 +129,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL','redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

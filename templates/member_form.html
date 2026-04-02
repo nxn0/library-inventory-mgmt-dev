@@ -3,8 +3,12 @@
 {% block title %}{{ action }} Member - Library Inventory Management{% endblock %}
 
 {% block content %}
-<h1>{{ action }} Member</h1>
+<h1>{{ action }} Member (Manual Registration)</h1>
 <hr>
+
+<div class="alert alert-info">
+    <strong>Privacy Notice:</strong> Personal information provided here will be securely hashed and stored. Only the hashed data is kept for member identification.
+</div>
 
 <div class="row">
     <div class="col-md-6">
@@ -30,6 +34,23 @@
                 <a href="/members/" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Alternative: QR Code Registration</h5>
+            </div>
+            <div class="card-body">
+                <p>For anonymous registration using browser fingerprinting:</p>
+                <ul>
+                    <li>No personal information required</li>
+                    <li>Secure browser fingerprint identification</li>
+                    <li>Perfect for quick member registration</li>
+                </ul>
+                <a href="/members/create/?method=qr" class="btn btn-success">Use QR Code Registration</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

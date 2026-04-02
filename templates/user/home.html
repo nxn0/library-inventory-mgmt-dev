@@ -1,0 +1,172 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Home - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold mb-3">Welcome to Library System</h1>
+            <p class="lead text-muted mb-4">
+                Explore a vast collection of digital and physical books. Read online, download, 
+                share reviews, and borrow from our library.
+            </p>
+            <div>
+                <a href="{% url 'user_browse_books' %}" class="btn btn-primary btn-lg me-2">
+                    Browse Digital Books
+                </a>
+                {% if not is_authenticated %}
+                    <a href="{% url 'user_login' %}" class="btn btn-outline-primary btn-lg">
+                        Login
+                    </a>
+                {% else %}
+                    <a href="{% url 'user_borrow_library_book' %}" class="btn btn-outline-primary btn-lg">
+                        Borrow Library Books
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Featured Books Section -->
+    {% if featured_books %}
+    <div class="mb-5">
+        <h2 class="mb-4">⭐ Featured Books</h2>
+        <div class="row g-4">
+            {% for book in featured_books %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{% url 'user_book_detail' book.id %}" style="text-decoration: none; color: inherit;">
+                    <div class="card book-card h-100">
+                        <div class="book-cover">
+                            {% if book.cover_image %}
+                                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                📖
+                            {% endif %}
+                        </div>
+                        <div class="book-info">
+                            <div class="book-title">{{ book.title }}</div>
+                            <div class="book-author">by {{ book.author|default:"Unknown" }}</div>
+                            <div class="book-rating">
+                                ⭐ {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
+                            </div>
+                            <div class="text-muted small mt-2">
+                                Format: <span class="badge bg-info">{{ book.get_format_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Latest Books Section -->
+    {% if latest_books %}
+    <div class="mb-5">
+        <h2 class="mb-4">📚 Latest Uploads</h2>
+        <div class="row g-4">
+            {% for book in latest_books %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{% url 'user_book_detail' book.id %}" style="text-decoration: none; color: inherit;">
+                    <div class="card book-card h-100">
+                        <div class="book-cover">
+                            {% if book.cover_image %}
+                                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                📖
+                            {% endif %}
+                        </div>
+                        <div class="book-info">
+                            <div class="book-title">{{ book.title }}</div>
+                            <div class="book-author">by {{ book.author|default:"Unknown" }}</div>
+                            <div class="book-rating">
+                                ⭐ {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
+                            </div>
+                            <div class="text-muted small mt-2">
+                                {{ book.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📖 Read Online</h5>
+                    <p class="card-text">Read PDF and EPUB books directly in your browser. No downloads required.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">⭐ Leave Reviews</h5>
+                    <p class="card-text">Rate and review books. Share your thoughts with the community.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📤 Upload Books</h5>
+                    <p class="card-text">Share your favorite PDFs and EPUBs with the community.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">🔒 Privacy First</h5>
+                    <p class="card-text">Your data is encrypted and anonymous. We value your privacy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CTA Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-light border-0">
+                <div class="card-body text-center p-5">
+                    {% if not is_authenticated %}
+                        <h3 class="card-title mb-3">Ready to Get Started?</h3>
+                        <p class="card-text mb-4">
+                            Login to unlock borrowing from our library, upload your own books, 
+                            and join our reading community.
+                        </p>
+                        <a href="{% url 'user_login' %}" class="btn btn-primary btn-lg">
+                            Login Now
+                        </a>
+                    {% else %}
+                        <h3 class="card-title mb-3">Ready to Borrow?</h3>
+                        <p class="card-text mb-4">
+                            Browse and borrow physical books from our library collection.
+                        </p>
+                        <a href="{% url 'user_borrow_library_book' %}" class="btn btn-primary btn-lg">
+                            Browse Library Books
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 15px;
+        padding: 3rem 2rem;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Register - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <h1 class="card-title text-center mb-4">Create Your Account</h1>
+                    <p class="text-center text-muted mb-4">Enter your Library/Student ID and optional preferred username.</p>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_library_id" class="form-label">Library/Student ID</label>
+                            <input type="text" name="library_id" id="id_library_id" class="form-control" placeholder="Enter your ID" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Choose a username (optional)</label>
+                            <input type="text" name="username" id="id_username" class="form-control" placeholder="Recommended: auto-generated username" />
+                            <small class="text-muted">If left blank, the system will generate one for you.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">Password</label>
+                            <input type="password" name="password" id="id_password" class="form-control" placeholder="Choose password" required>
+                            <small class="text-muted">This password is used for username login.</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2 mt-3">Create Account</button>
+
+                        <div class="text-center mt-3">
+                            <a href="{% url 'user_login' %}">Already have an account? Log in</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

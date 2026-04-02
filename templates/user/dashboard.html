@@ -1,0 +1,195 @@
+{% extends 'user/base.html' %}
+
+{% block title %}My Dashboard - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">My Dashboard</h1>
+    
+    <div class="row mb-4">
+        <!-- Dashboard Stats -->
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ uploaded_books.count }}</div>
+                <div class="stat-label">Books Uploaded</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ borrowed_books.count }}</div>
+                <div class="stat-label">Books Borrowed</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ user_reviews.count }}</div>
+                <div class="stat-label">Reviews Left</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-value">📚</div>
+                <div class="stat-label">Active Member</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'user_upload_book' %}" class="btn btn-primary w-100">
+                + Upload New Book
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'user_browse_books' %}" class="btn btn-outline-primary w-100">
+                Browse Digital Books
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'user_borrow_library_book' %}" class="btn btn-outline-primary w-100">
+                Borrow Library Books
+            </a>
+        </div>
+    </div>
+    
+    <nav class="nav nav-tabs mb-4" role="tablist">
+        <button class="nav-link active" id="uploads-tab" data-bs-toggle="tab" data-bs-target="#uploads">
+            📤 My Uploads ({{ uploaded_books.count }})
+        </button>
+        <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed">
+            📕 Borrowed Books ({{ borrowed_books.count }})
+        </button>
+        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews">
+            ⭐ My Reviews ({{ user_reviews.count }})
+        </button>
+    </nav>
+    
+    <div class="tab-content">
+        <!-- My Uploads Tab -->
+        <div class="tab-pane fade show active" id="uploads" role="tabpanel">
+            {% if uploaded_books %}
+            <div class="row g-4">
+                {% for book in uploaded_books %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ book.title }}</h6>
+                            <p class="card-text text-muted small">{{ book.author }}</p>
+                            <div class="mb-2">
+                                <span class="badge bg-success">{{ book.get_format_display }}</span>
+                                {% if not book.is_verified %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                                {% if book.is_banned %}
+                                    <span class="badge bg-danger">Banned</span>
+                                {% endif %}
+                            </div>
+                            <p class="small text-muted">
+                                👁️ {{ book.view_count }} | ⬇️ {{ book.download_count }} | ⭐ {{ book.rating_avg|floatformat:1 }}
+                            </p>
+                            <div class="btn-group btn-group-sm w-100">
+                                <a href="{% url 'user_book_detail' book.id %}" class="btn btn-outline-primary">View</a>
+                                <a href="{% url 'user_download_book' book.id %}" class="btn btn-outline-primary">Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                You haven't uploaded any books yet. 
+                <a href="{% url 'user_upload_book' %}">Upload your first book</a>!
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Borrowed Books Tab -->
+        <div class="tab-pane fade" id="borrowed" role="tabpanel">
+            {% if borrowed_books %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in borrowed_books %}
+                        <tr>
+                            <td>
+                                <strong>{{ transaction.resource.title }}</strong><br>
+                                <small class="text-muted">{{ transaction.resource.author }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ transaction.due_date }}</strong>
+                                {% if transaction.is_overdue %}
+                                    <br><span class="badge bg-danger">OVERDUE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if transaction.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'user_return_book' %}" class="btn btn-sm btn-outline-primary">Return</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                You haven't borrowed any library books yet. 
+                <a href="{% url 'user_borrow_library_book' %}">Browse library books</a>!
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- My Reviews Tab -->
+        <div class="tab-pane fade" id="reviews" role="tabpanel">
+            {% if user_reviews %}
+            <div class="row g-3">
+                {% for review in user_reviews %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <a href="{% url 'user_book_detail' review.book.id %}">{{ review.book.title }}</a>
+                            </h6>
+                            {% if review.title %}
+                            <h6 class="card-subtitle text-muted mb-2">{{ review.title }}</h6>
+                            {% endif %}
+                            <p class="card-text">{{ review.content }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    {% for star in "12345"|make_list %}
+                                        {% if star|add:0 <= review.rating %}⭐{% else %}☆{% endif %}
+                                    {% endfor %}
+                                    {{ review.rating }}/5
+                                </span>
+                                <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                You haven't left any reviews yet. 
+                <a href="{% url 'user_browse_books' %}">Browse books and leave reviews</a>!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

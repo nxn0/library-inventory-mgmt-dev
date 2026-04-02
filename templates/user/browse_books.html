@@ -1,0 +1,119 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Browse Books - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Browse Digital Books</h1>
+        </div>
+        <div class="col-md-4">
+            {% if is_authenticated %}
+            <a href="{% url 'user_upload_book' %}" class="btn btn-primary w-100">
+                + Upload New Book
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search by title or author..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="format" class="form-select">
+                        <option value="">All Formats</option>
+                        <option value="pdf" {% if book_format == 'pdf' %}selected{% endif %}>PDF</option>
+                        <option value="epub" {% if book_format == 'epub' %}selected{% endif %}>EPUB</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="sort" class="form-select">
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest</option>
+                        <option value="-rating_avg" {% if sort_by == '-rating_avg' %}selected{% endif %}>Top Rated</option>
+                        <option value="-view_count" {% if sort_by == '-view_count' %}selected{% endif %}>Most Viewed</option>
+                        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A-Z</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Books Grid -->
+    {% if page_obj %}
+    <div class="row g-4 mb-4">
+        {% for book in page_obj %}
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <a href="{% url 'user_book_detail' book.id %}" style="text-decoration: none; color: inherit;">
+                <div class="card book-card h-100">
+                    <div class="book-cover" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        {% if book.cover_image %}
+                            <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <span style="font-size: 4rem;">📖</span>
+                        {% endif %}
+                    </div>
+                    <div class="book-info">
+                        <div class="book-title text-truncate">{{ book.title }}</div>
+                        <div class="book-author text-truncate">{{ book.author|default:"Unknown" }}</div>
+                        <div class="book-rating">
+                            {% if book.rating_avg %}
+                                ⭐ {{ book.rating_avg }}/5
+                            {% else %}
+                                No ratings yet
+                            {% endif %}
+                        </div>
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">{{ book.get_format_display }}</span>
+                            <span class="small text-muted">👁️ {{ book.view_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mb-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info">
+        No books found matching your criteria.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

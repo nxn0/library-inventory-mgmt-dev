@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Category, Resource, Member, Transaction, StockLog
+from .models import (
+    Category, Resource, Member, Transaction, StockLog,
+    UserBook, UserReview, AnonymousUser, UserAuthentication,
+    UserBan, Fine, OverdueBook
+)
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -39,15 +43,22 @@ class ResourceAdmin(admin.ModelAdmin):
 
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ['member_id', 'hashed_fingerprint', 'is_active', 'join_date', 'created_at']
-    list_filter = ['is_active', 'join_date']
-    search_fields = ['member_id', 'hashed_fingerprint']
+    list_display = ['member_id', 'full_name', 'email', 'member_type', 'hashed_fingerprint', 'is_active', 'join_date', 'created_at']
+    list_filter = ['member_type', 'is_active', 'join_date']
+    search_fields = ['member_id', 'first_name', 'last_name', 'email', 'hashed_fingerprint']
     list_editable = ['is_active']
     ordering = ['-created_at']
     
     fieldsets = (
-        ('Member Information', {
-            'fields': ('member_id', 'hashed_fingerprint', 'is_active', 'join_date')
+        ('Basic Information', {
+            'fields': ('member_id', 'first_name', 'last_name', 'email', 'phone')
+        }),
+        ('Membership Details', {
+            'fields': ('member_type', 'department', 'join_date', 'is_active')
+        }),
+        ('Fingerprint Data', {
+            'fields': ('hashed_fingerprint',),
+            'classes': ('collapse',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -99,3 +110,89 @@ class StockLogAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# ========== USER-SIDE ADMIN ==========
+
+@admin.register(AnonymousUser)
+class AnonymousUserAdmin(admin.ModelAdmin):
+    list_display = ['user_id', 'fingerprint_hash', 'ip_address', 'created_at', 'last_activity', 'is_active']
+    list_filter = ['is_active', 'created_at', 'last_activity']
+    search_fields = ['user_id', 'fingerprint_hash', 'ip_address']
+    readonly_fields = ['user_id', 'fingerprint_hash', 'created_at', 'last_activity']
+    ordering = ['-last_activity']
+
+
+@admin.register(UserAuthentication)
+class UserAuthenticationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'auth_method', 'member', 'is_active', 'is_banned', 'created_at']
+    list_filter = ['auth_method', 'is_active', 'is_banned', 'created_at']
+    search_fields = ['encrypted_library_id', 'member__member_id']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+
+@admin.register(UserBook)
+class UserBookAdmin(admin.ModelAdmin):
+    list_display = ['title', 'author', 'format', 'is_verified', 'is_banned', 'rating_avg', 'created_at']
+    list_filter = ['format', 'is_verified', 'is_banned', 'created_at']
+    search_fields = ['title', 'author']
+    list_editable = ['is_verified', 'is_banned']
+    readonly_fields = ['view_count', 'download_count', 'rating_avg', 'review_count', 'created_at', 'updated_at']
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        ('Book Information', {
+            'fields': ('title', 'author', 'description', 'format')
+        }),
+        ('File Details', {
+            'fields': ('file', 'file_size', 'pages_count', 'cover_image')
+        }),
+        ('Status & Moderation', {
+            'fields': ('is_verified', 'is_banned', 'ban_reason', 'uploaded_by_user')
+        }),
+        ('Statistics', {
+            'fields': ('view_count', 'download_count', 'rating_avg', 'review_count'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(UserReview)
+class UserReviewAdmin(admin.ModelAdmin):
+    list_display = ['book', 'rating', 'is_flagged', 'created_at']
+    list_filter = ['rating', 'is_flagged', 'created_at']
+    search_fields = ['book__title', 'content']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+
+@admin.register(UserBan)
+class UserBanAdmin(admin.ModelAdmin):
+    list_display = ['user_auth', 'reason', 'is_permanent', 'ban_until', 'created_at']
+    list_filter = ['reason', 'is_permanent', 'created_at']
+    search_fields = ['user_auth__id', 'description']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']
+
+
+@admin.register(Fine)
+class FineAdmin(admin.ModelAdmin):
+    list_display = ['member', 'amount', 'days_overdue', 'is_paid', 'created_at']
+    list_filter = ['is_paid', 'created_at']
+    search_fields = ['member__member_id', 'member__first_name', 'member__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+
+@admin.register(OverdueBook)
+class OverdueBookAdmin(admin.ModelAdmin):
+    list_display = ['book_title', 'user_identifier', 'days_overdue', 'is_recovered', 'created_at']
+    list_filter = ['is_recovered', 'created_at', 'days_overdue']
+    search_fields = ['book_title', 'user_identifier', 'name', 'phone']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-days_overdue']

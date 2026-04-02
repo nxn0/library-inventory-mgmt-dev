@@ -185,37 +185,72 @@ def member_detail(request, pk):
 
 
 def member_create(request):
-    """Generate QR code for member registration"""
-    import qrcode
-    import io
-    import base64
+    """Create new member - supports both manual form and QR code registration"""
+    if request.method == 'POST':
+        # Manual member creation
+        form = MemberForm(request.POST)
+        if form.is_valid():
+            member = form.save()
+            messages.success(request, f'Member "{member.full_name}" created successfully!')
+            return redirect('member_detail', pk=member.pk)
+    else:
+        # Check if user wants QR code registration
+        if request.GET.get('method') == 'qr':
+            # QR code registration
+            import qrcode
+            import io
+            import base64
+            from django.conf import settings
+            import socket
+            
+            # Generate a unique registration token
+            import uuid
+            token = str(uuid.uuid4())
+            
+            # Store token in session for verification
+            request.session['registration_token'] = token
+            
+            # Determine base URL for QR code
+            base_url = settings.QR_BASE_URL
+            if base_url == 'http://localhost:8000':
+                # Try to auto-detect external IP
+                try:
+                    # Get local IP address
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.connect(("8.8.8.8", 80))
+                    local_ip = s.getsockname()[0]
+                    s.close()
+                    base_url = f"http://{local_ip}:8000"
+                except:
+                    # Fallback to localhost if auto-detection fails
+                    base_url = 'http://localhost:8000'
+            
+            # Create QR code with URL to registration page using configured base URL
+            registration_url = f"{base_url}/members/register/{token}/"
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(registration_url)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill='black', back_color='white')
+            
+            # Convert to base64 for display in template
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+            
+            context = {
+                'qr_code': img_str,
+                'registration_url': registration_url,
+                'token': token,
+                'base_url': base_url
+            }
+            return render(request, 'member_register.html', context)
+        else:
+            # Show manual form
+            form = MemberForm()
     
-    # Generate a unique registration token
-    import uuid
-    token = str(uuid.uuid4())
-    
-    # Store token in session for verification
-    request.session['registration_token'] = token
-    
-    # Create QR code with URL to registration page
-    registration_url = request.build_absolute_uri(f'/members/register/{token}/')
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(registration_url)
-    qr.make(fit=True)
-    
-    img = qr.make_image(fill='black', back_color='white')
-    
-    # Convert to base64 for display in template
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    img_str = base64.b64encode(buffer.getvalue()).decode()
-    
-    context = {
-        'qr_code': img_str,
-        'registration_url': registration_url,
-        'token': token
-    }
-    return render(request, 'member_register.html', context)
+    context = {'form': form, 'action': 'Create'}
+    return render(request, 'member_form.html', context)
 
 
 def member_register(request, token):

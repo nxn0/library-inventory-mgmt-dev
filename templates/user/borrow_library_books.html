@@ -1,0 +1,131 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Borrow Library Books - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Borrow from Library</h1>
+            <p class="text-muted">Browse and borrow physical books from our library collection</p>
+        </div>
+    </div>
+    
+    <!-- Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search by title, author, or resource ID..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Books Grid -->
+    {% if page_obj %}
+    <div class="row g-4 mb-4">
+        {% for book in page_obj %}
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="card h-100 d-flex flex-column">
+                <div class="book-cover" style="background: linear-gradient(135deg, #667eea, #764ba2); flex-grow: 1;">
+                    {% if book.image %}
+                        <img src="{{ book.image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 250px; font-size: 4rem;">📕</div>
+                    {% endif %}
+                </div>
+                <div class="book-info d-flex flex-column flex-grow-1">
+                    <h6 class="card-title text-truncate">{{ book.title }}</h6>
+                    <p class="card-text text-muted text-truncate small">
+                        {{ book.author|default:"Unknown Author" }}
+                    </p>
+                    <p class="card-text small mb-2">
+                        Copies: <strong>{{ book.available_quantity }}/{{ book.total_quantity }}</strong>
+                    </p>
+                    <div class="progress mb-2" style="height: 5px;">
+                        <div class="progress-bar" role="progressbar" style="width:5" {{ book.available_quantity|mul:100|div:book.total_quantity }}%"></div>
+                    </div>
+                    <p class="card-text small text-muted mb-3">
+                        Checkout: 15 days
+                    </p>
+                    
+                    {% if book.available_quantity > 0 %}
+                    <form method="post" action="{% url 'user_checkout_book' book.id %}" style="margin-top: auto;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            ✓ Borrow Book
+                        </button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="btn btn-secondary btn-sm w-100 disabled">
+                        Not Available
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Page navigation" class="mb-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info">
+        No books available matching your search.
+    </div>
+    {% endif %}
+    
+    <!-- Info Card -->
+    <div class="alert alert-info mt-4">
+        <strong>Borrowing Rules:</strong>
+        <ul class="mb-0 mt-2">
+            <li>Checkout period: 15 days</li>
+            <li>You can borrow up to 5 books at a time</li>
+            <li>Late returns will incur fines</li>
+            <li>Return books to the library counter</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.book-cover {
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 10px 10px 0 0;
+}
+</style>
+{% endblock %}

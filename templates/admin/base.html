@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard - Library System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            color: white;
+            overflow-y: auto;
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar-brand h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+        }
+        
+        .sidebar-section {
+            padding: 0.5rem 0;
+            margin-top: 1.5rem;
+        }
+        
+        .sidebar-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .nav-link {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            padding-left: 2rem;
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+        
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border-right: 3px solid white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .top-bar h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Alert */
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        /* Pagination */
+        .pagination {
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        /* Tables */
+        .table {
+            background: white;
+        }
+        
+        .table th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+                padding: 1rem;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h5>📚 Admin Panel</h5>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="sidebar-section">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            
+            <!-- Digital Books -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Digital Books</div>
+                <a href="{% url 'admin_user_books' %}" class="nav-link">
+                    <i class="bi bi-book"></i>
+                    <span>Manage Books</span>
+                </a>
+            </div>
+            
+            <!-- Users -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Users</div>
+                <a href="{% url 'admin_manage_users' %}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    <span>User Management</span>
+                </a>
+            </div>
+            
+            <!-- Library -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Library</div>
+                <a href="{% url 'admin_manage_fines' %}" class="nav-link">
+                    <i class="bi bi-receipt"></i>
+                    <span>Fines</span>
+                </a>
+                <a href="{% url 'admin_overdue_books' %}" class="nav-link">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span>Overdue Books</span>
+                </a>
+                <a href="{% url 'admin_checkout_tracking' %}" class="nav-link">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Checkouts</span>
+                </a>
+            </div>
+            
+            <!-- System -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">System</div>
+                <a href="{% url 'user_home' %}" class="nav-link">
+                    <i class="bi bi-globe"></i>
+                    <span>User Site</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="user-info">
+                <div class="user-avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+                <div>
+                    <div style="font-size: 0.9rem; font-weight: 600;">{{ request.user.first_name|default:request.user.username }}</div>
+                    <small class="text-muted">Administrator</small>
+                </div>
+                <a href="{% url 'admin_logout' %}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Content -->
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

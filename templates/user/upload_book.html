@@ -1,0 +1,124 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Upload Book - Library System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-4">Upload Digital Book</h1>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Book Title -->
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">Book Title *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.title.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Author -->
+                        <div class="mb-3">
+                            <label for="id_author" class="form-label">Author *</label>
+                            {{ form.author }}
+                            {% if form.author.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.author.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            {{ form.description }}
+                            <small class="text-muted d-block">Tell others about this book</small>
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Format -->
+                        <div class="mb-3">
+                            <label for="id_format" class="form-label">Book Format *</label>
+                            {{ form.format }}
+                            {% if form.format.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.format.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="id_file" class="form-label">Book File (PDF or EPUB) *</label>
+                            {{ form.file }}
+                            <small class="text-muted d-block">
+                                Max file size: 100MB. Only PDF and EPUB formats allowed.
+                            </small>
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.file.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Cover Image -->
+                        <div class="mb-3">
+                            <label for="id_cover_image" class="form-label">Cover Image (Optional)</label>
+                            {{ form.cover_image }}
+                            <small class="text-muted d-block">
+                                Upload a cover image for your book
+                            </small>
+                            {% if form.cover_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cover_image.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Info Box -->
+                        <div class="alert alert-info mb-4">
+                            <strong>Note:</strong> Your book will be pending admin verification before being visible to others. 
+                            This ensures our library maintains quality content standards.
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                📤 Upload Book
+                            </button>
+                            <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Guidelines -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">Upload Guidelines</h6>
+                    <ul class="small mb-0">
+                        <li>Ensure you have the right to share this book (respect copyright)</li>
+                        <li>Provide accurate book information</li>
+                        <li>Use high-quality cover images if available</li>
+                        <li>Books are moderated before becoming public</li>
+                        <li>Inappropriate content may be removed and your account may be suspended</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

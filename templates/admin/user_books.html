@@ -1,0 +1,216 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Digital Books - Admin Panel{% endblock %}
+{% block page_title %}Digital Books Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filter and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search by title or author..." 
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Books</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending Verification</option>
+                        <option value="verified" {% if status == 'verified' %}selected{% endif %}>Verified</option>
+                        <option value="banned" {% if status == 'banned' %}selected{% endif %}>Banned</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="format">
+                        <option value="">All Formats</option>
+                        <option value="pdf" {% if format == 'pdf' %}selected{% endif %}>PDF</option>
+                        <option value="epub" {% if format == 'epub' %}selected{% endif %}>EPUB</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Books Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Format</th>
+                            <th>Views</th>
+                            <th>Rating</th>
+                            <th>Uploaded By</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in books %}
+                        <tr>
+                            <td>
+                                <strong>{{ book.title|truncatewords:5 }}</strong>
+                            </td>
+                            <td>{{ book.author }}</td>
+                            <td>
+                                {% if book.format == 'pdf' %}
+                                    <span class="badge bg-danger">PDF</span>
+                                {% else %}
+                                    <span class="badge bg-info">EPUB</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="bi bi-eye"></i> {{ book.view_count }}
+                            </td>
+                            <td>
+                                {% if book.rating_avg %}
+                                    <span class="text-warning">
+                                        {% for i in 'x'|rjust:book.rating_avg|as_string %}★{% endfor %}
+                                        ({{ book.rating_avg }})
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No ratings</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if book.uploaded_by %}
+                                    {{ book.uploaded_by.username }}
+                                {% else %}
+                                    <span class="text-muted">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if book.is_banned %}
+                                    <span class="badge bg-danger">BANNED</span>
+                                {% elif book.is_verified %}
+                                    <span class="badge bg-success">VERIFIED</span>
+                                {% else %}
+                                    <span class="badge bg-warning">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ book.created_at|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'book_detail' book.id %}" class="btn btn-outline-info"
+                                       title="View" data-bs-toggle="tooltip">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
+                                    {% if not book.is_verified and not book.is_banned %}
+                                    <form method="POST" action="{% url 'admin_verify_book' book.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success"
+                                                title="Verify" data-bs-toggle="tooltip"
+                                                onclick="return confirm('Verify this book?');">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    {% if not book.is_banned %}
+                                    <form method="POST" action="{% url 'admin_ban_book' book.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger"
+                                                title="Ban" data-bs-toggle="tooltip"
+                                                onclick="return confirm('Ban this book? It will be removed from all users.');">
+                                            <i class="bi bi-hand-thumbs-down"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    <form method="POST" action="{% url 'admin_delete_book' book.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger"
+                                                title="Delete" data-bs-toggle="tooltip"
+                                                onclick="return confirm('Permanently delete this book?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No books found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f5f7fa;
+    }
+</style>
+{% endblock %}

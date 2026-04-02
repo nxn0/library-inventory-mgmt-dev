@@ -1,0 +1,347 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Checkout Tracking - Admin Panel{% endblock %}
+{% block page_title %}Checkout Tracking{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ active_checkouts }}</div>
+                        <div class="stat-label">Active Checkouts</div>
+                    </div>
+                    <i class="bi bi-book-half" style="font-size: 2rem; color: #667eea; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value" style="color: #ffc107;">{{ overdue_checkouts }}</div>
+                        <div class="stat-label">Overdue Checkouts</div>
+                    </div>
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #ffc107; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ total_transactions }}</div>
+                        <div class="stat-label">Total Transactions</div>
+                    </div>
+                    <i class="bi bi-graph-up" style="font-size: 2rem; color: #764ba2; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search by member name or book..." 
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Checkouts</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="returned" {% if status == 'returned' %}selected{% endif %}>Returned</option>
+                        <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>Overdue</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="sort">
+                        <option value="-checkout_date" {% if sort == '-checkout_date' %}selected{% endif %}>Most Recent</option>
+                        <option value="checkout_date" {% if sort == 'checkout_date' %}selected{% endif %}>Oldest</option>
+                        <option value="due_date" {% if sort == 'due_date' %}selected{% endif %}>Due Soon</option>
+                    </select>
+                </div>
+                <div class="col-md-3" style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                    <a href="{% url 'admin_checkout_tracking' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i> Checkout History
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Resource</th>
+                            <th>Checkout Date</th>
+                            <th>Due Date</th>
+                            <th>Return Date</th>
+                            <th>Days Borrowed</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr class="{% if transaction.status == 'overdue' %}table-warning{% elif transaction.status == 'returned' %}table-light{% endif %}">
+                            <td>
+                                <div>
+                                    <strong>{{ transaction.member.first_name }} {{ transaction.member.last_name }}</strong>
+                                    <br><small class="text-muted">{{ transaction.member.member_id }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ transaction.resource.title|truncatewords:4 }}</strong>
+                                    <br><small class="text-muted">{{ transaction.resource.resource_type|default:"Book" }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ transaction.checkout_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ transaction.due_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                {% if transaction.return_date %}
+                                    <small class="text-muted">{{ transaction.return_date|date:"M d, Y" }}</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>
+                                    {% if transaction.return_date %}
+                                        {{ transaction.days_borrowed }}
+                                    {% else %}
+                                        {{ transaction.days_borrowed }}
+                                    {% endif %}
+                                </strong>
+                            </td>
+                            <td>
+                                {% if transaction.status == 'returned' %}
+                                    <span class="badge bg-success">RETURNED</span>
+                                {% elif transaction.status == 'overdue' %}
+                                    <span class="badge bg-danger">OVERDUE</span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% with overdue_days=transaction.overdue_days %}
+                                            {{ overdue_days }} day{{ overdue_days|pluralize }}
+                                        {% endwith %}
+                                    </small>
+                                {% else %}
+                                    <span class="badge bg-info">ACTIVE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if transaction.notes %}
+                                    {{ transaction.notes|truncatewords:5 }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View Details -->
+                                    <button class="btn btn-outline-info" data-bs-toggle="modal" 
+                                            data-bs-target="#transactionModal{{ transaction.id }}"
+                                            title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    
+                                    {% if transaction.status != 'returned' %}
+                                    <!-- Edit Status -->
+                                    <button class="btn btn-outline-warning" data-bs-toggle="modal" 
+                                            data-bs-target="#editModal{{ transaction.id }}"
+                                            title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Transaction Details Modal -->
+                        <div class="modal fade" id="transactionModal{{ transaction.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Transaction Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Member:</strong><br>
+                                                {{ transaction.member.first_name }} {{ transaction.member.last_name }}<br>
+                                                <small class="text-muted">{{ transaction.member.member_id }}</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Email:</strong><br>
+                                                {{ transaction.member.email|default:"Not provided" }}
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <strong>Book/Resource:</strong><br>
+                                                {{ transaction.resource.title }}<br>
+                                                <small class="text-muted">
+                                                    {{ transaction.resource.author|default:"Unknown Author" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Checkout Date:</strong><br>
+                                                {{ transaction.checkout_date|date:"M d, Y H:i" }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Due Date:</strong><br>
+                                                {{ transaction.due_date|date:"M d, Y H:i" }}
+                                            </div>
+                                        </div>
+                                        {% if transaction.return_date %}
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Return Date:</strong><br>
+                                                {{ transaction.return_date|date:"M d, Y H:i" }}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Days Borrowed:</strong><br>
+                                                {{ transaction.days_borrowed }} days
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        <hr>
+                                        <div>
+                                            <strong>Status:</strong><br>
+                                            {% if transaction.status == 'returned' %}
+                                                <span class="badge bg-success">RETURNED</span>
+                                            {% elif transaction.status == 'overdue' %}
+                                                <span class="badge bg-danger">OVERDUE</span>
+                                            {% else %}
+                                                <span class="badge bg-info">ACTIVE</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Edit Modal -->
+                        {% if transaction.status != 'returned' %}
+                        <div class="modal fade" id="editModal{{ transaction.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Transaction</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{% url 'admin_edit_transaction' transaction.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Return Date</label>
+                                                <input type="date" class="form-control" name="return_date">
+                                                <small class="text-muted">Leave blank if still borrowed</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">New Due Date (optional)</label>
+                                                <input type="date" class="form-control" name="new_due_date">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Notes</label>
+                                                <textarea class="form-control" name="notes" rows="3">{{ transaction.notes }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Update Transaction</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No transactions found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Manage Fines - Admin Panel{% endblock %}
+{% block page_title %}Fine Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value" style="color: #dc3545;">₹{{ total_outstanding }}</div>
+                        <div class="stat-label">Outstanding Fines</div>
+                    </div>
+                    <i class="bi bi-cash" style="font-size: 2rem; color: #dc3545; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value" style="color: #28a745;">₹{{ total_collected }}</div>
+                        <div class="stat-label">Collected Today</div>
+                    </div>
+                    <i class="bi bi-check-circle" style="font-size: 2rem; color: #28a745; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ pending_fines_count }}</div>
+                        <div class="stat-label">Pending Fines</div>
+                    </div>
+                    <i class="bi bi-hourglass-split" style="font-size: 2rem; color: #ffc107; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ paid_fines_count }}</div>
+                        <div class="stat-label">Paid Fines</div>
+                    </div>
+                    <i class="bi bi-receipt" style="font-size: 2rem; color: #17a2b8; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search by member name..." 
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Fines</option>
+                        <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="sort">
+                        <option value="-amount" {% if sort == '-amount' %}selected{% endif %}>Highest Amount</option>
+                        <option value="amount" {% if sort == 'amount' %}selected{% endif %}>Lowest Amount</option>
+                        <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Most Recent</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Fines Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Fine Amount</th>
+                            <th>Days Overdue</th>
+                            <th>Status</th>
+                            <th>Date Imposed</th>
+                            <th>Overdue Book</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fine in fines %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>{{ fine.member.first_name }} {{ fine.member.last_name }}</strong>
+                                    <br><small class="text-muted">ID: {{ fine.member.member_id }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <strong style="font-size: 1.1rem; color: #dc3545;">₹{{ fine.amount }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                    {% if fine.days_overdue > 30 %}
+                                        style="background-color: #dc3545;"
+                                    {% elif fine.days_overdue > 15 %}
+                                        style="background-color: #ffc107;"
+                                    {% else %}
+                                        style="background-color: #17a2b8;"
+                                    {% endif %}
+                                >
+                                    {{ fine.days_overdue }} days
+                                </span>
+                            </td>
+                            <td>
+                                {% if fine.is_paid %}
+                                    <span class="badge bg-success">PAID</span>
+                                    <br><small class="text-muted">{{ fine.paid_date|date:"M d, Y" }}</small>
+                                {% else %}
+                                    <span class="badge bg-danger">UNPAID</span>
+                                    <br><small class="text-muted">{{ fine.created_at|date:"M d, Y" }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ fine.created_at|date:"M d, Y H:i" }}</small>
+                            </td>
+                            <td>
+                                {% if fine.overdue_book %}
+                                    {{ fine.overdue_book.title|truncatewords:3 }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View Details -->
+                                    <button class="btn btn-outline-info" data-bs-toggle="modal" 
+                                            data-bs-target="#fineModal{{ fine.id }}"
+                                            title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    
+                                    {% if not fine.is_paid %}
+                                    <!-- Mark as Paid -->
+                                    <form method="POST" action="{% url 'admin_mark_fine_paid' fine.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success"
+                                                title="Mark as Paid"
+                                                onclick="return confirm('Mark this fine as paid?');">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    <!-- Delete -->
+                                    <form method="POST" action="{% url 'admin_delete_fine' fine.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger"
+                                                title="Delete"
+                                                onclick="return confirm('Delete this fine?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Fine Details Modal -->
+                        <div class="modal fade" id="fineModal{{ fine.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Fine Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Member:</strong><br>
+                                                {{ fine.member.first_name }} {{ fine.member.last_name }}<br>
+                                                <small class="text-muted">{{ fine.member.member_id }}</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Member Email:</strong><br>
+                                                {{ fine.member.email|default:"Not provided" }}
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Fine Amount:</strong><br>
+                                                <span style="font-size: 1.2rem; color: #dc3545;">₹{{ fine.amount }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Days Overdue:</strong><br>
+                                                {{ fine.days_overdue }} days
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Status:</strong><br>
+                                                {% if fine.is_paid %}
+                                                    <span class="badge bg-success">PAID</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">UNPAID</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Date Imposed:</strong><br>
+                                                {{ fine.created_at|date:"M d, Y H:i" }}
+                                            </div>
+                                        </div>
+                                        {% if fine.overdue_book %}
+                                        <hr>
+                                        <strong>Related Overdue Book:</strong><br>
+                                        {{ fine.overdue_book.title }} by {{ fine.overdue_book.author }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No fines found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f5f7fa;
+    }
+</style>
+{% endblock %}

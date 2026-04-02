@@ -4,3 +4,8 @@ python-dateutil
 pytz
 sqlparse
 qrcode[pil]
+cryptography
+PyPDF2
+ebooklib
+celery
+redis
