@@ -1,0 +1,40 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Resource Details - {{ resource.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{% url 'user_browse_books' %}" class="btn btn-light mb-4">← Back to Browse</a>
+            <h1>{{ resource.title }}</h1>
+            <p class="text-muted">{{ resource.resource_id }}</p>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p><strong>Author:</strong> {{ resource.author|default:'Unknown' }}</p>
+                    <p><strong>Category:</strong> {{ resource.category.name|default:'Uncategorized' }}</p>
+                    <p><strong>Publisher:</strong> {{ resource.publisher|default:'Unknown' }}</p>
+                    <p><strong>Publication Year:</strong> {{ resource.publication_year|default:'N/A' }}</p>
+                    <p><strong>Shelf Location:</strong> {{ resource.shelf_location|default:'N/A' }}</p>
+                    <p><strong>Status:</strong> {{ resource.status|capfirst }}</p>
+                    <p><strong>Available / Total:</strong> {{ resource.available_quantity }} / {{ resource.total_quantity }}</p>
+                    <p><strong>Description:</strong> {{ resource.description|default:'No description provided.' }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Library interaction metrics
+                </div>
+                <div class="card-body">
+                    <p><strong>Total borrow count:</strong> {{ stats.total_borrowed }}</p>
+                    <p><strong>Active borrows:</strong> {{ stats.active_borrows }}</p>
+                    <p><strong>Returned:</strong> {{ stats.returned }}</p>
+                    <p><strong>Overdue:</strong> {{ stats.overdue }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

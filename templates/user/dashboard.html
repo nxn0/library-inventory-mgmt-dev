@@ -28,7 +28,7 @@
         </div>
         <div class="col-md-6 col-lg-3">
             <div class="stat-card">
-                <div class="stat-value">📚</div>
+                <div class="stat-value">Active</div>
                 <div class="stat-label">Active Member</div>
             </div>
         </div>
@@ -55,13 +55,13 @@
     
     <nav class="nav nav-tabs mb-4" role="tablist">
         <button class="nav-link active" id="uploads-tab" data-bs-toggle="tab" data-bs-target="#uploads">
-            📤 My Uploads ({{ uploaded_books.count }})
+            My Uploads ({{ uploaded_books.count }})
         </button>
         <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed">
-            📕 Borrowed Books ({{ borrowed_books.count }})
+            [B] Borrowed Books ({{ borrowed_books.count }})
         </button>
         <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews">
-            ⭐ My Reviews ({{ user_reviews.count }})
+            My Reviews ({{ user_reviews.count }})
         </button>
     </nav>
     
@@ -86,7 +86,7 @@
                                 {% endif %}
                             </div>
                             <p class="small text-muted">
-                                👁️ {{ book.view_count }} | ⬇️ {{ book.download_count }} | ⭐ {{ book.rating_avg|floatformat:1 }}
+                                views: {{ book.view_count }} | downloads: {{ book.download_count }} | rating: {{ book.rating_avg|floatformat:1 }}
                             </p>
                             <div class="btn-group btn-group-sm w-100">
                                 <a href="{% url 'user_book_detail' book.id %}" class="btn btn-outline-primary">View</a>
@@ -172,7 +172,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>
                                     {% for star in "12345"|make_list %}
-                                        {% if star|add:0 <= review.rating %}⭐{% else %}☆{% endif %}
+                                        {% if star|add:0 <= review.rating %}📖{% else %}·{% endif %}
                                     {% endfor %}
                                     {{ review.rating }}/5
                                 </span>

@@ -7,34 +7,62 @@
 <div class="container-fluid">
     <!-- Stats Row -->
     <div class="row mb-4">
-        <!-- Total Users -->
+        <!-- Total Registered Users -->
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="stat-value">{{ total_users }}</div>
-                        <div class="stat-label">Active Users</div>
+                        <div class="stat-label">Registered Users</div>
                     </div>
-                    <i class="bi bi-people-fill" style="font-size: 2rem; color: #667eea; opacity: 0.3;"></i>
+                    <i class="bi bi-person-circle" style="font-size: 2rem; color: #667eea; opacity: 0.3;"></i>
                 </div>
-                <small class="text-muted">Registered in system</small>
+                <small class="text-muted">Configured accounts</small>
             </div>
         </div>
-        
-        <!-- Total Books -->
+
+        <!-- Total Anonymous Users -->
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-value">{{ total_books }}</div>
-                        <div class="stat-label">Digital Books</div>
+                        <div class="stat-value">{{ total_anonymous_users }}</div>
+                        <div class="stat-label">Anonymous Users</div>
                     </div>
-                    <i class="bi bi-book-fill" style="font-size: 2rem; color: #764ba2; opacity: 0.3;"></i>
+                    <i class="bi bi-person-lines-fill" style="font-size: 2rem; color: #0d6efd; opacity: 0.3;"></i>
                 </div>
-                <small class="text-muted">Uploaded by users</small>
+                <small class="text-muted">Session-based visitors</small>
             </div>
         </div>
-        
+
+        <!-- Total Online Books -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ total_online_books }}</div>
+                        <div class="stat-label">Online Books</div>
+                    </div>
+                    <i class="bi bi-cloud-upload-fill" style="font-size: 2rem; color: #764ba2; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">User-uploaded all formats</small>
+            </div>
+        </div>
+
+        <!-- Total Offline Books -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ total_offline_books }}</div>
+                        <div class="stat-label">Offline Books</div>
+                    </div>
+                    <i class="bi bi-book-half" style="font-size: 2rem; color: #3d9970; opacity: 0.3;"></i>
+                </div>
+                <small class="text-muted">Physical inventory</small>
+            </div>
+        </div>
+
         <!-- Pending Verification -->
         <div class="col-md-3">
             <div class="stat-card">
@@ -74,10 +102,16 @@
                     </h5>
                     <div class="d-grid gap-2">
                         <a href="{% url 'admin_user_books' %}" class="btn btn-outline-primary">
-                            <i class="bi bi-book"></i> Verify Books
+                            <i class="bi bi-book"></i> Manage Online Books
+                        </a>
+                        <a href="{% url 'resource_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-book-half"></i> Manage Offline Resources
+                        </a>
+                        <a href="{% url 'resource_create' %}" class="btn btn-outline-success">
+                            <i class="bi bi-plus-circle"></i> + Add Resource
                         </a>
                         <a href="{% url 'admin_manage_users' %}" class="btn btn-outline-primary">
-                            <i class="bi bi-person-x"></i> Manage Users
+                            <i class="bi bi-people"></i> User Database
                         </a>
                         <a href="{% url 'admin_manage_fines' %}" class="btn btn-outline-primary">
                             <i class="bi bi-receipt"></i> Manage Fines

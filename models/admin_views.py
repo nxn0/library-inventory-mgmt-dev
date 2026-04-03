@@ -83,19 +83,28 @@ def admin_required(view_func):
 @admin_required
 def admin_user_books(request):
     """Manage digital books uploaded by users"""
+    if request.session.get('is_custom_admin', False):
+        # For legacy admin, keep users in one dashboard view
+        return admin_dashboard(request)
+
     books = UserBook.objects.all().annotate(
-        review_count=Count('reviews'),
-        avg_rating=Avg('reviews__rating')
+        review_count_agg=Count('reviews'),
+        avg_rating_agg=Avg('reviews__rating')
     ).order_by('-created_at')
     
     # Filter by status
     status_filter = request.GET.get('status', '')
-    if status_filter == 'unverified':
-        books = books.filter(is_verified=False)
+    if status_filter == 'pending' or status_filter == 'unverified':
+        books = books.filter(is_verified=False, is_banned=False)
     elif status_filter == 'banned':
         books = books.filter(is_banned=True)
     elif status_filter == 'verified':
         books = books.filter(is_verified=True, is_banned=False)
+
+    # Filter by format
+    format_filter = request.GET.get('format', '')
+    if format_filter in ['pdf', 'epub']:
+        books = books.filter(format=format_filter)
     
     # Search
     search_query = request.GET.get('search', '')
@@ -115,6 +124,8 @@ def admin_user_books(request):
         'page_obj': page_obj,
         'status_filter': status_filter,
         'search_query': search_query,
+        'status': status_filter,
+        'format': format_filter,
     }
     return render(request, 'admin/user_books.html', context)
 
@@ -173,32 +184,61 @@ def admin_delete_book(request, book_id):
 @admin_required
 def admin_manage_users(request):
     """Manage user accounts"""
-    users = UserAuthentication.objects.all().order_by('-created_at')
-    
+    users = UserAuthentication.objects.select_related('member').order_by('-created_at')
+    anonymous_users = AnonymousUser.objects.order_by('-last_activity')
+
     # Filter
     status_filter = request.GET.get('status', '')
     if status_filter == 'banned':
         users = users.filter(is_banned=True)
     elif status_filter == 'active':
         users = users.filter(is_active=True, is_banned=False)
-    
+
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
         users = users.filter(
             Q(encrypted_library_id__icontains=search_query) |
-            Q(member__member_id__icontains=search_query)
+            Q(member__member_id__icontains=search_query) |
+            Q(username__icontains=search_query) |
+            Q(member__first_name__icontains=search_query) |
+            Q(member__last_name__icontains=search_query)
         )
-    
-    # Pagination
+
+    # Pagination for registered users
     paginator = Paginator(users, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # Anonymous user summary to display alongside
+    anon_count = anonymous_users.count()
+
+    # Overdue members list with decrypted data for overdue-only reporting
+    overdue_members_qs = Member.objects.filter(
+        transactions__status='overdue'
+    ).distinct().select_related()
     
+    # Build overdue dict with count for template
+    overdue_members = []
+    for member in overdue_members_qs:
+        overdue_count = member.transactions.filter(status='overdue').count()
+        overdue_members.append({
+            'member': member,
+            'overdue_count': overdue_count,
+        })
+
+    # Provide unregistered online visitors by hash for compliance tracking
+    unregistered_users = AnonymousUser.objects.filter(is_active=True).order_by('-last_activity')
+
     context = {
+        'users': page_obj,
         'page_obj': page_obj,
         'status_filter': status_filter,
         'search_query': search_query,
+        'anonymous_users': anonymous_users,
+        'anon_count': anon_count,
+        'overdue_members': overdue_members,
+        'unregistered_users': unregistered_users,
     }
     return render(request, 'admin/manage_users.html', context)
 
@@ -453,30 +493,44 @@ def admin_dashboard(request):
         # Legacy inventory dashboard from previous system
         return inventory_dashboard(request)
 
-    # Statistics
+    # User statistics
     total_users = UserAuthentication.objects.count()
     banned_users = UserAuthentication.objects.filter(is_banned=True).count()
-    total_books = UserBook.objects.count()
-    unverified_books = UserBook.objects.filter(is_verified=False).count()
-    banned_books = UserBook.objects.filter(is_banned=True).count()
-    
+    total_anonymous_users = AnonymousUser.objects.count()
+
+    # Digital books stats
+    total_online_books = UserBook.objects.count()
+    verified_online_books = UserBook.objects.filter(is_verified=True, is_banned=False).count()
+    pending_online_books = UserBook.objects.filter(is_verified=False, is_banned=False).count()
+    banned_online_books = UserBook.objects.filter(is_banned=True).count()
+
+    # Offline book stats
+    total_offline_books = Resource.objects.count()
+    available_offline_books = Resource.objects.filter(status='available').count()
+    checked_out_offline_books = Transaction.objects.filter(status='active').count()
+
     # Overdue books
-    overdue_books = OverdueBook.objects.filter(is_recovered=False).count()
-    
-    # Unpaid fines
+    overdue_books = OverdueBook.objects.count()
+
+    # Fines
     unpaid_fines_amount = Fine.objects.filter(is_paid=False).aggregate(Sum('amount'))['amount__sum'] or 0
     unpaid_fines_count = Fine.objects.filter(is_paid=False).count()
-    
+
     # Recent activity
     recent_uploads = UserBook.objects.order_by('-created_at')[:5]
     recent_bans = UserBan.objects.order_by('-created_at')[:5]
-    
+
     context = {
         'total_users': total_users,
         'banned_users': banned_users,
-        'total_books': total_books,
-        'unverified_books': unverified_books,
-        'banned_books': banned_books,
+        'total_anonymous_users': total_anonymous_users,
+        'total_online_books': total_online_books,
+        'verified_online_books': verified_online_books,
+        'pending_online_books': pending_online_books,
+        'banned_online_books': banned_online_books,
+        'total_offline_books': total_offline_books,
+        'available_offline_books': available_offline_books,
+        'checked_out_offline_books': checked_out_offline_books,
         'overdue_books': overdue_books,
         'unpaid_fines_amount': unpaid_fines_amount,
         'unpaid_fines_count': unpaid_fines_count,

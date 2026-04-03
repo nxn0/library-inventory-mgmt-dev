@@ -35,6 +35,66 @@
                             {% endif %}
                         </div>
                         
+                        <!-- Book Identifier -->
+                        <div class="mb-3">
+                            <label for="id_resource_id" class="form-label">ISBN / Resource ID</label>
+                            {{ form.resource_id }}
+                            <small class="text-muted d-block">Optional, but helpful for catalog matching.</small>
+                            {% if form.resource_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.resource_id.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label for="id_category" class="form-label">Category</label>
+                            {{ form.category }}
+                            <small class="text-muted d-block">Optional classification.</small>
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.category.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Publisher -->
+                        <div class="mb-3">
+                            <label for="id_publisher" class="form-label">Publisher</label>
+                            {{ form.publisher }}
+                            <small class="text-muted d-block">Optional.</small>
+                            {% if form.publisher.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.publisher.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Publication Year -->
+                        <div class="mb-3">
+                            <label for="id_publication_year" class="form-label">Publication Year</label>
+                            {{ form.publication_year }}
+                            <small class="text-muted d-block">Optional.</small>
+                            {% if form.publication_year.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.publication_year.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Shelf Location -->
+                        <div class="mb-3">
+                            <label for="id_shelf_location" class="form-label">Shelf Location</label>
+                            {{ form.shelf_location }}
+                            <small class="text-muted d-block">Optional (internal catalog value).</small>
+                            {% if form.shelf_location.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.shelf_location.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="id_description" class="form-label">Description</label>
@@ -95,7 +155,7 @@
                         <!-- Submit Buttons -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                📤 Upload Book
+                                Upload Book
                             </button>
                             <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary">
                                 Cancel

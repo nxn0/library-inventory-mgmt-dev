@@ -5,304 +5,202 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Filter and Search -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3">
-                <div class="col-md-5">
-                    <input type="text" class="form-control" name="search" placeholder="Search by name, email, or library ID..." 
-                           value="{{ search }}">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search by username, library ID, or member name..." value="{{ search_query }}">
                 </div>
                 <div class="col-md-3">
                     <select class="form-select" name="status">
                         <option value="">All Users</option>
-                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="banned" {% if status == 'banned' %}selected{% endif %}>Banned</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="banned" {% if status_filter == 'banned' %}selected{% endif %}>Banned</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select" name="sort">
-                        <option value="-joined" {% if sort == '-joined' %}selected{% endif %}>Latest Joined</option>
-                        <option value="joined" {% if sort == 'joined' %}selected{% endif %}>Oldest Joined</option>
-                        <option value="uploads" {% if sort == 'uploads' %}selected{% endif %}>Most Uploads</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Search
-                    </button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Search</button>
                 </div>
             </form>
         </div>
     </div>
-    
-    <!-- Users Table -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>User Info</th>
-                            <th>Auth Method</th>
-                            <th>Books Uploaded</th>
-                            <th>Reviews</th>
-                            <th>Status</th>
-                            <th>Joined</th>
-                            <th>Last Active</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user_auth in users %}
-                        <tr>
-                            <td>
-                                <div>
-                                    <strong>{{ user_auth.user.get_full_name|default:user_auth.user.username }}</strong>
-                                    {% if user_auth.user.email %}
-                                        <br><small class="text-muted">{{ user_auth.user.email }}</small>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                {% if user_auth.auth_method == 'library_id' %}
-                                    <span class="badge bg-info">Library ID</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Credentials</span>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Registered User Database ({{ page_obj.paginator.count|default:users.count }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Member ID</th>
+                                    <th>Auth Source</th>
+                                    <th>User Hash (encrypted if any)</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_auth in page_obj %}
+                                <tr>
+                                    <td>{{ user_auth.member.member_id|default:'N/A' }}</td>
+                                    <td>{{ user_auth.get_auth_method_display }}</td>
+                                    <td>
+                                        {% if user_auth.encrypted_library_id %}
+                                            {{ user_auth.encrypted_library_id|slice:":20" }}...
+                                        {% elif user_auth.encrypted_auth_data %}
+                                            {{ user_auth.encrypted_auth_data|slice:":20" }}...
+                                        {% else %}
+                                            {{ user_auth.username|default:'N/A' }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user_auth.is_banned %}
+                                            <span class="badge bg-danger">Banned</span>
+                                        {% elif not user_auth.is_active %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user_auth.created_at|date:'M d, Y' }}</td>
+                                    <td>{{ user_auth.updated_at|date:'M d, Y' }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            {% if user_auth.is_banned %}
+                                            <form method="post" action="{% url 'admin_unban_user' user_auth.id %}">{% csrf_token %}<button class="btn btn-sm btn-success">Unban</button></form>
+                                            {% else %}
+                                            <form method="post" action="{% url 'admin_ban_user' user_auth.id %}">{% csrf_token %}<button class="btn btn-sm btn-warning">Ban</button></form>
+                                            {% endif %}
+                                            <form method="post" action="{% url 'admin_delete_user' user_auth.id %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="7" class="text-center">No registered users found.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if page_obj.has_other_pages %}
+                        <nav>
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Prev</a></li>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <i class="bi bi-book"></i> {{ user_auth.userbook_count|default:0 }}
-                            </td>
-                            <td>
-                                <i class="bi bi-chat-dots"></i> {{ user_auth.userreview_count|default:0 }}
-                            </td>
-                            <td>
-                                {% if user_auth.is_banned %}
-                                    <span class="badge bg-danger">BANNED</span>
-                                    {% if user_auth.ban_until %}
-                                        <br><small class="text-muted">Until {{ user_auth.ban_until|date:"M d, Y" }}</small>
-                                    {% else %}
-                                        <br><small class="text-muted">Permanent</small>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="badge bg-success">ACTIVE</span>
+                                {% for p in page_obj.paginator.page_range %}
+                                    <li class="page-item {% if p == page_obj.number %}active{% endif %}"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <small class="text-muted">{{ user_auth.created_at|date:"M d, Y" }}</small>
-                            </td>
-                            <td>
-                                <small class="text-muted">
-                                    {% if user_auth.last_login %}
-                                        {{ user_auth.last_login|date:"M d, H:i" }}
-                                    {% else %}
-                                        Never
-                                    {% endif %}
-                                </small>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <!-- View User Details -->
-                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" 
-                                            data-bs-target="#userModal{{ user_auth.id }}"
-                                            title="View Details" data-bs-toggle="tooltip">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    
-                                    <!-- Ban/Unban -->
-                                    {% if user_auth.is_banned %}
-                                    <form method="POST" action="{% url 'admin_unban_user' user_auth.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success"
-                                                title="Unban" data-bs-toggle="tooltip"
-                                                onclick="return confirm('Remove ban from this user?');">
-                                            <i class="bi bi-check-circle"></i>
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <button class="btn btn-outline-warning" data-bs-toggle="modal" 
-                                            data-bs-target="#banModal{{ user_auth.id }}"
-                                            title="Ban User" data-bs-toggle="tooltip">
-                                        <i class="bi bi-hand-thumbs-down"></i>
-                                    </button>
-                                    {% endif %}
-                                    
-                                    <!-- Delete -->
-                                    <form method="POST" action="{% url 'admin_delete_user' user_auth.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger"
-                                                title="Delete" data-bs-toggle="tooltip"
-                                                onclick="return confirm('Permanently delete this user and all their data?');">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Ban Modal -->
-                        <div class="modal fade" id="banModal{{ user_auth.id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Ban User</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <form method="POST" action="{% url 'admin_ban_user' user_auth.id %}">
-                                        {% csrf_token %}
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label class="form-label">Ban Reason</label>
-                                                <textarea class="form-control" name="reason" rows="3" required
-                                                    placeholder="Why are you banning this user?"></textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Ban Type</label>
-                                                <select class="form-select" name="ban_type" required>
-                                                    <option value="temporary">Temporary (30 days)</option>
-                                                    <option value="permanent">Permanent</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-danger">Ban User</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- User Details Modal -->
-                        <div class="modal fade" id="userModal{{ user_auth.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">{{ user_auth.user.get_full_name|default:user_auth.user.username }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p><strong>Username:</strong> {{ user_auth.user.username }}</p>
-                                                <p><strong>Email:</strong> {{ user_auth.user.email|default:"Not provided" }}</p>
-                                                <p><strong>Auth Method:</strong> {{ user_auth.auth_method }}</p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <p><strong>Joined:</strong> {{ user_auth.created_at|date:"M d, Y H:i" }}</p>
-                                                <p><strong>Last Active:</strong> {{ user_auth.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
-                                                <p><strong>Status:</strong> 
-                                                    {% if user_auth.is_banned %}
-                                                        <span class="badge bg-danger">Banned</span>
-                                                    {% else %}
-                                                        <span class="badge bg-success">Active</span>
-                                                    {% endif %}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <hr>
-                                        <h6>Activity Summary</h6>
-                                        <div class="row">
-                                            <div class="col-md-4 text-center">
-                                                <div class="mb-2">
-                                                    <strong class="d-block" style="font-size: 1.5rem; color: #667eea;">
-                                                        {{ user_auth.userbook_count|default:0 }}
-                                                    </strong>
-                                                    <small class="text-muted">Books Uploaded</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4 text-center">
-                                                <div class="mb-2">
-                                                    <strong class="d-block" style="font-size: 1.5rem; color: #764ba2;">
-                                                        {{ user_auth.userreview_count|default:0 }}
-                                                    </strong>
-                                                    <small class="text-muted">Reviews Posted</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4 text-center">
-                                                <div class="mb-2">
-                                                    <strong class="d-block" style="font-size: 1.5rem; color: #ffc107;">
-                                                        {{ user_auth.checkouts_count|default:0 }}
-                                                    </strong>
-                                                    <small class="text-muted">Books Borrowed</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-5">
-                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                <p class="mt-2">No users found</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
             </div>
-            
-            <!-- Pagination -->
-            {% if is_paginated %}
-            <nav class="d-flex justify-content-center mt-4">
-                <ul class="pagination">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1">First</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-                        </li>
-                    {% endif %}
-                    
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Overdue Members ({{ overdue_members|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Member ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Overdue Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in overdue_members %}
+                                <tr>
+                                    <td>{{ m.member.member_id }}</td>
+                                    <td>{{ m.member.first_name|default:'' }} {{ m.member.last_name|default:'' }}</td>
+                                    <td>{{ m.member.email|default:'-' }}</td>
+                                    <td>{{ m.member.phone|default:'-' }}</td>
+                                    <td>{{ m.overdue_count }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center">No overdue members</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Unregistered Online Users</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Hash (fingerprint)</th>
+                                    <th>Session Key (partial)</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for anon in unregistered_users|slice:':20' %}
+                                <tr>
+                                    <td>{{ anon.fingerprint_hash|slice:":20" }}...</td>
+                                    <td>{{ anon.session_key|slice:":20" }}...</td>
+                                    <td>{{ anon.last_activity|date:'M d, Y H:i' }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center">No unregistered session users</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Anonymous ID</th>
+                                    <th>Last Activity</th>
+                                    <th>IP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for anon in anonymous_users|slice:':10' %}
+                                <tr>
+                                    <td>{{ anon.user_id }}</td>
+                                    <td>{{ anon.last_activity|date:'M d, Y H:i' }}</td>
+                                    <td>{{ anon.ip_address|default:'N/A' }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center">No anonymous sessions</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info">
+                <p>Anonymous users can upload books and leave reviews without login.</p>
+                <p>All anonymous sessions are available in this dashboard.</p>
+            </div>
         </div>
     </div>
 </div>
-
-<script>
-    // Initialize tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
-
-<style>
-    .btn-group-sm .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: #f5f7fa;
-    }
-</style>
 {% endblock %}

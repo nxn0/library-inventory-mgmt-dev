@@ -249,15 +249,33 @@ class UserBookUploadForm(forms.ModelForm):
     """Form for uploading digital books"""
     class Meta:
         model = UserBook
-        fields = ['title', 'author', 'description', 'format', 'file', 'cover_image']
+        fields = [
+            'title', 'author', 'resource_id', 'category', 'publisher',
+            'publication_year', 'description', 'shelf_location',
+            'format', 'file', 'cover_image'
+        ]
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Book Title',
+                'placeholder': 'Book Title (required)',
             }),
             'author': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Author Name',
+            }),
+            'resource_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ISBN/ID (optional)',
+            }),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'publisher': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Publisher (optional)',
+            }),
+            'publication_year': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Publication Year (optional)',
+                'min': 0,
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -272,6 +290,10 @@ class UserBookUploadForm(forms.ModelForm):
             'cover_image': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': 'image/*',
+            }),
+            'shelf_location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Shelf Location (optional, e.g., A-101)',
             }),
         }
 

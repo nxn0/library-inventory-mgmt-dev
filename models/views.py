@@ -4,8 +4,8 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import Resource, Category, Member, Transaction, StockLog
-from .forms import ResourceForm, CategoryForm, MemberForm, CheckoutForm, StockLogForm, SearchForm
+from .models import Resource, Category, Member, Transaction, StockLog, UserBook, AnonymousUser
+from .forms import ResourceForm, CategoryForm, MemberForm, CheckoutForm, StockLogForm, SearchForm, UserBookUploadForm
 
 
 # ============= DASHBOARD =============
@@ -30,6 +30,11 @@ def dashboard(request):
         resource_count=Count('resources')
     ).order_by('-resource_count')[:5]
     
+    # Online uploads (user-submitted books)
+    total_online_books = UserBook.objects.filter(is_verified=True, is_banned=False).count()
+    pending_online_books = UserBook.objects.filter(is_verified=False, is_banned=False).count()
+    recent_online_uploads = UserBook.objects.order_by('-created_at')[:10]
+
     context = {
         'total_resources': total_resources,
         'total_members': total_members,
@@ -38,6 +43,9 @@ def dashboard(request):
         'low_stock': low_stock,
         'recent_transactions': recent_transactions,
         'popular_categories': popular_categories,
+        'total_online_books': total_online_books,
+        'pending_online_books': pending_online_books,
+        'recent_online_uploads': recent_online_uploads,
     }
     return render(request, 'dashboard.html', context)
 
@@ -46,34 +54,131 @@ def dashboard(request):
 def resource_list(request):
     """List all resources with search and filter"""
     resources = Resource.objects.select_related('category').all()
-    
+    online_books = UserBook.objects.all().order_by('-created_at')
+
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
         resources = resources.filter(
             Q(title__icontains=search_query) |
             Q(resource_id__icontains=search_query) |
-            Q(author__icontains=search_query)
+            Q(author__icontains=search_query) |
+            Q(category__name__icontains=search_query)
         )
-    
-    # Filter by category
+        online_books = online_books.filter(
+            Q(title__icontains=search_query) |
+            Q(author__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    # Filter by category (offline resources only)
     category_id = request.GET.get('category', '')
     if category_id:
         resources = resources.filter(category_id=category_id)
-    
-    # Filter by status
+
+    # Filter by status (offline resources only)
     status = request.GET.get('status', '')
     if status:
         resources = resources.filter(status=status)
-    
+
+    # Always show both offline and online resources in legacy dashboard.
+    # Ignore type filter so both sections display unconditionally.
+    book_type = 'all'
+
     categories = Category.objects.all()
-    
+
     context = {
         'resources': resources,
+        'online_books': online_books,
         'categories': categories,
         'search_query': search_query,
+        'book_type': book_type,
+        'status': status,
     }
     return render(request, 'resource_list.html', context)
+
+
+def resource_verify_user_book(request, book_id):
+    """Verify a user-uploaded book from legacy admin dashboard"""
+    book = get_object_or_404(UserBook, id=book_id)
+    book.is_verified = True
+    book.is_banned = False
+    book.save(update_fields=['is_verified', 'is_banned'])
+    messages.success(request, f'Online book "{book.title}" verified successfully.')
+    return redirect('resource_list')
+
+
+def resource_ban_user_book(request, book_id):
+    """Ban a user-uploaded book from legacy admin dashboard"""
+    book = get_object_or_404(UserBook, id=book_id)
+    book.is_banned = True
+    book.is_verified = False
+    book.save(update_fields=['is_banned', 'is_verified'])
+    messages.success(request, f'Online book "{book.title}" banned successfully.')
+    return redirect('resource_list')
+
+
+def resource_delete_user_book(request, book_id):
+    """Delete a user-uploaded book from legacy admin dashboard"""
+    book = get_object_or_404(UserBook, id=book_id)
+    title = book.title
+    if book.file:
+        book.file.delete(save=False)
+    if book.cover_image:
+        book.cover_image.delete(save=False)
+    book.delete()
+    messages.success(request, f'Online book "{title}" deleted successfully.')
+    return redirect('resource_list')
+
+
+def resource_edit_user_book(request, book_id):
+    """Edit user-uploaded book metadata from legacy admin dashboard"""
+    book = get_object_or_404(UserBook, id=book_id)
+
+    if request.method == 'POST':
+        form = UserBookUploadForm(request.POST, request.FILES, instance=book)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Online book "{book.title}" updated successfully.')
+            return redirect('resource_list')
+    else:
+        form = UserBookUploadForm(instance=book)
+
+    context = {
+        'form': form,
+        'book': book,
+        'action': 'Edit Online Book',
+    }
+    return render(request, 'admin/user_book_form.html', context)
+
+
+def resource_view_user_book(request, book_id):
+    """View a user uploaded book (PDF/EPUB) from legacy dashboard"""
+    book = get_object_or_404(UserBook, id=book_id)
+
+    if book.is_banned:
+        messages.error(request, 'This book has been banned and cannot be viewed.')
+        return redirect('resource_list')
+
+    if book.format == 'pdf':
+        book_url = request.build_absolute_uri(book.file.url)
+        context = {
+            'book': book,
+            'book_url': book_url,
+            'back_url': request.build_absolute_uri('/resources/')
+        }
+        return render(request, 'admin/user_read_pdf.html', context)
+    elif book.format == 'epub':
+        book_url = request.build_absolute_uri(book.file.url)
+        context = {
+            'book': book,
+            'book_url': book_url,
+            'back_url': request.build_absolute_uri('/resources/')
+        }
+        return render(request, 'admin/user_read_epub.html', context)
+    else:
+        messages.error(request, 'Unsupported format.')
+        return redirect('resource_list')
 
 
 def resource_detail(request, pk):
@@ -91,26 +196,44 @@ def resource_detail(request, pk):
 
 
 def resource_create(request):
-    """Create new resource"""
-    if request.method == 'POST':
-        form = ResourceForm(request.POST, request.FILES)
-        if form.is_valid():
-            resource = form.save()
-            
-            # Create initial stock log
+    """Create new resource or upload user digital book from legacy admin page"""
+    upload_mode = request.POST.get('upload_mode', 'offline')
+
+    if request.method == 'POST' and upload_mode == 'online':
+        user_book_form = UserBookUploadForm(request.POST, request.FILES)
+        if user_book_form.is_valid():
+            book = user_book_form.save(commit=False)
+            book.is_verified = True  # Admin-created by default verified
+            book.is_banned = False
+            book.file_size = book.file.size if book.file else 0
+            book.save()
+            messages.success(request, f'Online book "{book.title}" created and verified successfully!')
+            return redirect('resource_list')
+        resource_form = ResourceForm()
+
+    elif request.method == 'POST' and upload_mode == 'offline':
+        resource_form = ResourceForm(request.POST, request.FILES)
+        user_book_form = UserBookUploadForm()
+        if resource_form.is_valid():
+            resource = resource_form.save()
             StockLog.objects.create(
                 resource=resource,
                 action='add',
                 quantity=resource.total_quantity,
                 reason='Initial stock entry'
             )
-            
             messages.success(request, f'Resource "{resource.title}" created successfully!')
             return redirect('resource_detail', pk=resource.pk)
+
     else:
-        form = ResourceForm()
-    
-    context = {'form': form, 'action': 'Create'}
+        resource_form = ResourceForm()
+        user_book_form = UserBookUploadForm()
+
+    context = {
+        'resource_form': resource_form,
+        'user_book_form': user_book_form,
+        'action': 'Create'
+    }
     return render(request, 'resource_form.html', context)
 
 
@@ -165,9 +288,28 @@ def member_list(request):
     if member_type:
         members = members.filter(member_type=member_type)
     
+    # Overdue members list with full decrypted data for compliance reporting
+    overdue_members_qs = Member.objects.filter(
+        transactions__status='overdue'
+    ).distinct().select_related()
+    
+    # Build overdue dict with count for template
+    overdue_members = []
+    for member in overdue_members_qs:
+        overdue_count = member.transactions.filter(status='overdue').count()
+        overdue_members.append({
+            'member': member,
+            'overdue_count': overdue_count,
+        })
+
+    # Unregistered online users by hash for compliance tracking
+    unregistered_users = AnonymousUser.objects.filter(is_active=True).order_by('-last_activity')
+
     context = {
         'members': members,
         'search_query': search_query,
+        'overdue_members': overdue_members,
+        'unregistered_users': unregistered_users,
     }
     return render(request, 'member_list.html', context)
 

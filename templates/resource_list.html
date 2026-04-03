@@ -9,16 +9,25 @@
 <div class="row mb-3">
     <div class="col-md-6">
         <form method="get" class="input-group">
-            <input type="text" name="search" class="form-control" placeholder="Search resources..." value="{{ search_query }}">
+            <input type="text" name="search" class="form-control" placeholder="Search any book..." value="{{ search_query }}">
+            <select name="type" class="form-select" style="max-width: 180px;">
+                <option value="all" {% if request.GET.type == 'all' or not request.GET.type %}selected{% endif %}>All</option>
+                <option value="offline" {% if request.GET.type == 'offline' %}selected{% endif %}>Offline only</option>
+                <option value="online" {% if request.GET.type == 'online' %}selected{% endif %}>Online only</option>
+            </select>
             <button class="btn btn-primary" type="submit">Search</button>
         </form>
     </div>
     <div class="col-md-3">
-        <a href="/resources/create/" class="btn btn-success w-100">+ Add New Resource</a>
+        <a href="/resources/create/" class="btn btn-success w-100">+ Add New Offline Resource</a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'admin_user_books' %}" class="btn btn-outline-info w-100">Manage Online Books</a>
     </div>
 </div>
 
 {% if resources %}
+    <h4>Offline resources</h4>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -62,6 +71,62 @@
         </tbody>
     </table>
 {% else %}
-    <p class="text-muted">No resources found.</p>
+    <p class="text-muted">No offline resources found.</p>
+{% endif %}
+
+{% if online_books %}
+    <h4 class="mt-5">Online Digital Books</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Format</th>
+                <th>Uploaded By</th>
+                <th>Verified</th>
+                <th>Banned</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in online_books %}
+                <tr>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author|default:'N/A' }}</td>
+                    <td>{{ book.get_format_display }}</td>
+                    <td>
+                        {% if book.uploaded_by_user %}
+                            {{ book.uploaded_by_user.user_id }}
+                            {% if book.uploaded_by_user.ip_address %}({{ book.uploaded_by_user.ip_address }}){% endif %}
+                        {% else %}
+                            Anonymous
+                        {% endif %}
+                    </td>
+                    <td>{% if book.is_verified %}Yes{% else %}No{% endif %}</td>
+                    <td>{% if book.is_banned %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'resource_view_user_book' book.id %}" class="btn btn-sm btn-secondary">View</a>
+                        <a href="{% url 'resource_edit_user_book' book.id %}" class="btn btn-sm btn-warning">Edit</a>
+                        {% if not book.is_verified and not book.is_banned %}
+                        <form method="post" action="{% url 'resource_verify_user_book' book.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success" {% if book.is_verified %}disabled{% endif %}>Verify</button>
+                        </form>
+                        <form method="post" action="{% url 'resource_ban_user_book' book.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" {% if book.is_banned %}disabled{% endif %}>Ban</button>
+                        </form>
+                        <form method="post" action="{% url 'resource_delete_user_book' book.id %}" style="display:inline;" onsubmit="return confirm('Delete this online book permanently?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No online books matching search.</p>
 {% endif %}
 {% endblock %}

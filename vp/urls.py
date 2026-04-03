@@ -24,6 +24,7 @@ urlpatterns = [
     path('user/books/<int:book_id>/read-pdf/', user_views.user_read_book_pdf, name='user_read_pdf'),
     path('user/books/<int:book_id>/read-epub/', user_views.user_read_book_epub, name='user_read_epub'),
     path('user/books/<int:book_id>/download/', user_views.user_download_book, name='user_download_book'),
+    path('user/resources/<int:resource_id>/', user_views.user_resource_detail, name='user_resource_detail'),
     
     # Book upload & management
     path('user/upload/', user_views.user_upload_book, name='user_upload_book'),
@@ -76,6 +77,12 @@ urlpatterns = [
     path('resources/create/', views.resource_create, name='resource_create'),
     path('resources/<int:pk>/edit/', views.resource_edit, name='resource_edit'),
     path('resources/<int:pk>/delete/', views.resource_delete, name='resource_delete'),
+
+    # User uploaded digital books management in legacy UI
+    path('resources/user-books/<int:book_id>/edit/', views.resource_edit_user_book, name='resource_edit_user_book'),
+    path('resources/user-books/<int:book_id>/verify/', views.resource_verify_user_book, name='resource_verify_user_book'),
+    path('resources/user-books/<int:book_id>/ban/', views.resource_ban_user_book, name='resource_ban_user_book'),
+    path('resources/user-books/<int:book_id>/delete/', views.resource_delete_user_book, name='resource_delete_user_book'),
     
     # Members
     path('members/', views.member_list, name='member_list'),
@@ -89,7 +96,14 @@ urlpatterns = [
     path('checkout/', views.checkout_create, name='checkout_create'),
     path('return/', views.return_resource, name='return_resource'),
     path('transactions/', views.transaction_list, name='transaction_list'),
-    
+
+    # User uploaded book management in legacy resources
+    path('resources/user-books/<int:book_id>/view/', views.resource_view_user_book, name='resource_view_user_book'),
+    path('resources/user-books/<int:book_id>/edit/', views.resource_edit_user_book, name='resource_edit_user_book'),
+    path('resources/user-books/<int:book_id>/verify/', views.resource_verify_user_book, name='resource_verify_user_book'),
+    path('resources/user-books/<int:book_id>/ban/', views.resource_ban_user_book, name='resource_ban_user_book'),
+    path('resources/user-books/<int:book_id>/delete/', views.resource_delete_user_book, name='resource_delete_user_book'),
+
     # Categories
     path('categories/', views.category_list, name='category_list'),
     path('categories/create/', views.category_create, name='category_create'),

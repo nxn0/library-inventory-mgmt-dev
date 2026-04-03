@@ -6,16 +6,26 @@
 <h1>{{ action }} Resource</h1>
 <hr>
 
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="btn-group" role="group" aria-label="Upload mode">
+            <button id="offlineBtn" class="btn btn-outline-primary active">Add Offline Resource</button>
+            <button id="onlineBtn" class="btn btn-outline-primary">Upload Online Book</button>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-8">
-        <form method="post" enctype="multipart/form-data" class="was-validated">
+        <form id="offlineForm" method="post" enctype="multipart/form-data" class="was-validated" style="display: block;">
             {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            <input type="hidden" name="upload_mode" value="offline">
+
+            {% if resource_form.non_field_errors %}
+                <div class="alert alert-danger">{{ resource_form.non_field_errors }}</div>
             {% endif %}
-            
-            {% for field in form %}
+
+            {% for field in resource_form %}
                 <div class="mb-3">
                     <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
                     {{ field }}
@@ -27,12 +37,62 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            
+
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">{{ action }}</button>
                 <a href="/resources/" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
+
+        <form id="onlineForm" method="post" enctype="multipart/form-data" class="was-validated" style="display: none;">
+            {% csrf_token %}
+            <input type="hidden" name="upload_mode" value="online">
+
+            {% if user_book_form.non_field_errors %}
+                <div class="alert alert-danger">{{ user_book_form.non_field_errors }}</div>
+            {% endif %}
+
+            {% for field in user_book_form %}
+                <div class="mb-3">
+                    <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="invalid-feedback d-block">{{ field.errors|join:', ' }}</div>
+                    {% endif %}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Upload Online Book</button>
+                <a href="/resources/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+    const offlineBtn = document.getElementById('offlineBtn');
+    const onlineBtn = document.getElementById('onlineBtn');
+    const offlineForm = document.getElementById('offlineForm');
+    const onlineForm = document.getElementById('onlineForm');
+
+    offlineBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        offlineBtn.classList.add('active');
+        onlineBtn.classList.remove('active');
+        offlineForm.style.display = 'block';
+        onlineForm.style.display = 'none';
+    });
+
+    onlineBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        onlineBtn.classList.add('active');
+        offlineBtn.classList.remove('active');
+        offlineForm.style.display = 'none';
+        onlineForm.style.display = 'block';
+    });
+</script>
 {% endblock %}

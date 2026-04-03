@@ -47,7 +47,7 @@
         </div>
     </div>
     
-    <!-- Books Grid -->
+    <!-- Online Books Grid -->
     {% if page_obj %}
     <div class="row g-4 mb-4">
         {% for book in page_obj %}
@@ -58,7 +58,7 @@
                         {% if book.cover_image %}
                             <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                         {% else %}
-                            <span style="font-size: 4rem;">📖</span>
+                            <span style="font-size: 4rem; color: #aaa;">No image</span>
                         {% endif %}
                     </div>
                     <div class="book-info">
@@ -66,14 +66,14 @@
                         <div class="book-author text-truncate">{{ book.author|default:"Unknown" }}</div>
                         <div class="book-rating">
                             {% if book.rating_avg %}
-                                ⭐ {{ book.rating_avg }}/5
+                                * {{ book.rating_avg }}/5
                             {% else %}
                                 No ratings yet
                             {% endif %}
                         </div>
                         <div class="mt-2 d-flex justify-content-between align-items-center">
                             <span class="badge bg-info">{{ book.get_format_display }}</span>
-                            <span class="small text-muted">👁️ {{ book.view_count }}</span>
+                            <span class="small text-muted">views: {{ book.view_count }}</span>
                         </div>
                     </div>
                 </div>
@@ -115,5 +115,39 @@
         No books found matching your criteria.
     </div>
     {% endif %}
+
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h3>Offline Library Books</h3>
+            {% if resources %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Available</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resource in resources %}
+                        <tr>
+                            <td><a href="{% url 'user_resource_detail' resource_id=resource.pk %}" style="color: inherit;">{{ resource.title }}</a></td>
+                            <td>{{ resource.author|default:'Unknown' }}</td>
+                            <td>{{ resource.available_quantity }}/{{ resource.total_quantity }}</td>
+                            <td>{{ resource.shelf_location|default:'N/A' }}</td>
+                            <td>{{ resource.status|capfirst }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary">No offline resources available.</div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

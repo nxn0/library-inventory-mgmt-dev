@@ -199,6 +199,10 @@ def user_browse_books(request):
         is_verified=True
     ).order_by('-created_at')
     
+    resources = Resource.objects.filter(
+        status='available'
+    ).order_by('-created_at')
+
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
@@ -206,6 +210,12 @@ def user_browse_books(request):
             Q(title__icontains=search_query) |
             Q(author__icontains=search_query) |
             Q(description__icontains=search_query)
+        )
+        resources = resources.filter(
+            Q(title__icontains=search_query) |
+            Q(author__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(resource_id__icontains=search_query)
         )
     
     # Filter by format
@@ -225,9 +235,11 @@ def user_browse_books(request):
     
     context = {
         'page_obj': page_obj,
+        'resources': resources,
         'search_query': search_query,
         'book_format': book_format,
         'sort_by': sort_by,
+        'is_authenticated': 'user_auth_id' in request.session,
     }
     return render(request, 'user/browse_books.html', context)
 
@@ -258,17 +270,35 @@ def user_book_detail(request, book_id):
     return render(request, 'user/book_detail.html', context)
 
 
+def user_resource_detail(request, resource_id):
+    """Public detail for offline library resource (no admin redirect)"""
+    resource = get_object_or_404(Resource, id=resource_id)
+    transactions = Transaction.objects.filter(resource=resource)
+
+    stats = {
+        'total_borrowed': transactions.count(),
+        'active_borrows': transactions.filter(status='active').count(),
+        'returned': transactions.filter(status='returned').count(),
+        'overdue': transactions.filter(status='overdue').count(),
+    }
+
+    context = {
+        'resource': resource,
+        'stats': stats,
+    }
+    return render(request, 'user/resource_detail.html', context)
+
+
 def user_read_book_pdf(request, book_id):
     """Read PDF in browser"""
     book = get_object_or_404(UserBook, id=book_id, format='pdf', is_banned=False)
     
-    # Check permissions
-    if not request.user.is_anonymous and 'user_auth_id' not in request.session:
-        return HttpResponse('Unauthorized', status=403)
+    # Generate absolute URL to avoid browser path issues
+    book_url = request.build_absolute_uri(book.file.url)
     
     context = {
         'book': book,
-        'book_url': book.file.url,
+        'book_url': book_url,
     }
     return render(request, 'user/read_pdf.html', context)
 
@@ -277,9 +307,11 @@ def user_read_book_epub(request, book_id):
     """Read EPUB in browser"""
     book = get_object_or_404(UserBook, id=book_id, format='epub', is_banned=False)
     
+    book_url = request.build_absolute_uri(book.file.url)
+
     context = {
         'book': book,
-        'book_url': book.file.url,
+        'book_url': book_url,
     }
     return render(request, 'user/read_epub.html', context)
 
@@ -303,42 +335,42 @@ def user_download_book(request, book_id):
 
 @require_http_methods(["GET", "POST"])
 def user_upload_book(request):
-    """Upload a digital book"""
-    if 'user_auth_id' not in request.session:
-        return redirect('user_login')
-    
-    anon_user_id = request.session.get('anon_user_id')
-    if not anon_user_id:
-        messages.error(request, 'Session expired.')
-        return redirect('user_home')
-    
+    """Upload a digital book (no login required)"""
+    anon_user = UserSessionManager.get_or_create_anonymous_user(request)
+    request.session['anon_user_id'] = anon_user.id
+
     if request.method == 'POST':
         form = UserBookUploadForm(request.POST, request.FILES)
         if form.is_valid():
             book = form.save(commit=False)
-            book.uploaded_by_user_id = anon_user_id
+            book.uploaded_by_user = anon_user
             book.file_size = request.FILES['file'].size
             book.is_verified = False  # Admin must verify
             book.save()
-            
+
             messages.success(request, 'Book uploaded successfully! Awaiting admin verification.')
             return redirect('user_dashboard')
     else:
         form = UserBookUploadForm()
-    
+
     context = {'form': form}
     return render(request, 'user/upload_book.html', context)
 
 
 def user_manage_uploads(request):
     """Manage user's uploaded books"""
-    if 'anon_user_id' not in request.session:
-        return redirect('user_home')
-    
-    books = UserBook.objects.filter(
-        uploaded_by_user_id=request.session['anon_user_id']
-    ).order_by('-created_at')
-    
+    anon_user = None
+    if 'anon_user_id' in request.session:
+        try:
+            anon_user = AnonymousUser.objects.get(id=request.session['anon_user_id'])
+        except AnonymousUser.DoesNotExist:
+            anon_user = None
+
+    if not anon_user:
+        anon_user = UserSessionManager.get_or_create_anonymous_user(request)
+        request.session['anon_user_id'] = anon_user.id
+
+    books = UserBook.objects.filter(uploaded_by_user=anon_user).order_by('-created_at')
     context = {'books': books}
     return render(request, 'user/manage_uploads.html', context)
 
@@ -348,16 +380,18 @@ def user_manage_uploads(request):
 @require_http_methods(["POST"])
 def user_leave_review(request, book_id):
     """Leave a review on a book"""
-    if 'anon_user_id' not in request.session:
-        return redirect('user_login')
-    
+    anon_user = None
+    if 'anon_user_id' in request.session:
+        try:
+            anon_user = AnonymousUser.objects.get(id=request.session['anon_user_id'])
+        except AnonymousUser.DoesNotExist:
+            anon_user = None
+
+    if not anon_user:
+        anon_user = UserSessionManager.get_or_create_anonymous_user(request)
+        request.session['anon_user_id'] = anon_user.id
+
     book = get_object_or_404(UserBook, id=book_id, is_banned=False)
-    anon_user_id = request.session['anon_user_id']
-    
-    try:
-        anon_user = AnonymousUser.objects.get(id=anon_user_id)
-    except AnonymousUser.DoesNotExist:
-        return JsonResponse({'error': 'Session expired'}, status=400)
     
     # Check if user already reviewed this book
     existing_review = UserReview.objects.filter(book=book, user=anon_user).exists()

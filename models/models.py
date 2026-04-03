@@ -268,13 +268,18 @@ class UserBook(models.Model):
     
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255, blank=True)
+    resource_id = models.CharField(max_length=50, blank=True, null=True)
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_books')
+    publisher = models.CharField(max_length=255, blank=True)
+    publication_year = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True)
     format = models.CharField(max_length=10, choices=BOOK_FORMAT_CHOICES)
+    shelf_location = models.CharField(max_length=50, blank=True, default='')
     
     # File storage
     file = models.FileField(upload_to='user_books/%Y/%m/%d/')
     file_size = models.BigIntegerField()  # In bytes
-    
+
     # Metadata
     cover_image = models.ImageField(upload_to='user_books/covers/', null=True, blank=True)
     pages_count = models.IntegerField(null=True, blank=True)

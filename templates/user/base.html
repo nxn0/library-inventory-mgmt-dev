@@ -173,7 +173,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'user_home' %}">📚 Library System</a>
+            <a class="navbar-brand" href="{% url 'user_home' %}">Library System</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -185,12 +185,15 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'user_browse_books' %}">Browse Books</a>
                     </li>
-                    {% if is_authenticated %}
+                    {% if is_authenticated or request.session.user_auth_id %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'user_dashboard' %}">My Dashboard</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'user_upload_book' %}">Upload Book</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_manage_uploads' %}">My Uploads</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'user_borrow_library_book' %}">Borrow Books</a>

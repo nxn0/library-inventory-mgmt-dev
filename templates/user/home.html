@@ -32,7 +32,7 @@
     <!-- Featured Books Section -->
     {% if featured_books %}
     <div class="mb-5">
-        <h2 class="mb-4">⭐ Featured Books</h2>
+        <h2 class="mb-4">* Featured Books</h2>
         <div class="row g-4">
             {% for book in featured_books %}
             <div class="col-md-6 col-lg-4">
@@ -42,14 +42,14 @@
                             {% if book.cover_image %}
                                 <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
-                                📖
+                                <div style="text-align:center; color:#999; font-size:2rem;">📖</div>
                             {% endif %}
                         </div>
                         <div class="book-info">
                             <div class="book-title">{{ book.title }}</div>
                             <div class="book-author">by {{ book.author|default:"Unknown" }}</div>
                             <div class="book-rating">
-                                ⭐ {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
+                                * {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
                             </div>
                             <div class="text-muted small mt-2">
                                 Format: <span class="badge bg-info">{{ book.get_format_display }}</span>
@@ -66,7 +66,7 @@
     <!-- Latest Books Section -->
     {% if latest_books %}
     <div class="mb-5">
-        <h2 class="mb-4">📚 Latest Uploads</h2>
+        <h2 class="mb-4">* Latest Uploads</h2>
         <div class="row g-4">
             {% for book in latest_books %}
             <div class="col-md-6 col-lg-4">
@@ -76,14 +76,14 @@
                             {% if book.cover_image %}
                                 <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
-                                📖
+                                <div style="text-align:center; color:#999; font-size:2rem;">📖</div>
                             {% endif %}
                         </div>
                         <div class="book-info">
                             <div class="book-title">{{ book.title }}</div>
                             <div class="book-author">by {{ book.author|default:"Unknown" }}</div>
                             <div class="book-rating">
-                                ⭐ {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
+                                * {{ book.rating_avg|default:"0" }}/5 ({{ book.review_count }} reviews)
                             </div>
                             <div class="text-muted small mt-2">
                                 {{ book.created_at|date:"M d, Y" }}
@@ -101,34 +101,42 @@
     <div class="row mb-5">
         <div class="col-md-6 mb-3">
             <div class="card h-100">
+                <a href="{% url 'user_browse_books' %}" class="text-decoration-none text-dark">
                 <div class="card-body">
-                    <h5 class="card-title">📖 Read Online</h5>
+                    <h5 class="card-title">Read Online</h5>
                     <p class="card-text">Read PDF and EPUB books directly in your browser. No downloads required.</p>
                 </div>
+                </a>
             </div>
         </div>
         <div class="col-md-6 mb-3">
             <div class="card h-100">
+                <a href="{% url 'user_browse_books' %}" class="text-decoration-none text-dark">
                 <div class="card-body">
-                    <h5 class="card-title">⭐ Leave Reviews</h5>
+                    <h5 class="card-title">Leave Reviews</h5>
                     <p class="card-text">Rate and review books. Share your thoughts with the community.</p>
                 </div>
+                </a>
             </div>
         </div>
         <div class="col-md-6 mb-3">
             <div class="card h-100">
+                <a href="{% url 'user_upload_book' %}" class="text-decoration-none text-dark">
                 <div class="card-body">
-                    <h5 class="card-title">📤 Upload Books</h5>
+                    <h5 class="card-title">Upload Books</h5>
                     <p class="card-text">Share your favorite PDFs and EPUBs with the community.</p>
                 </div>
+                </a>
             </div>
         </div>
         <div class="col-md-6 mb-3">
             <div class="card h-100">
+                <a href="{% url 'user_home' %}" class="text-decoration-none text-dark">
                 <div class="card-body">
-                    <h5 class="card-title">🔒 Privacy First</h5>
+                    <h5 class="card-title">Privacy First</h5>
                     <p class="card-text">Your data is encrypted and anonymous. We value your privacy.</p>
                 </div>
+                </a>
             </div>
         </div>
     </div>

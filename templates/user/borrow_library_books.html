@@ -36,7 +36,7 @@
                     {% if book.image %}
                         <img src="{{ book.image.url }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
-                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 250px; font-size: 4rem;">📕</div>
+                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 250px; color: #aaa;">No image available</div>
                     {% endif %}
                 </div>
                 <div class="book-info d-flex flex-column flex-grow-1">

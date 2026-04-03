@@ -31,9 +31,7 @@
         <thead>
             <tr>
                 <th>Member ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Type</th>
+                <th>Member Type</th>
                 <th>Status</th>
                 <th>Join Date</th>
                 <th>Actions</th>
@@ -43,8 +41,6 @@
             {% for member in members %}
                 <tr>
                     <td>{{ member.member_id }}</td>
-                    <td>{{ member.full_name }}</td>
-                    <td>{{ member.email }}</td>
                     <td>{{ member.get_member_type_display }}</td>
                     <td>
                         {% if member.is_active %}
@@ -66,4 +62,76 @@
 {% else %}
     <p class="text-muted">No members found.</p>
 {% endif %}
+
+<div class="row mt-5">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Overdue Members ({{ overdue_members|length }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Department</th>
+                                <th>Overdue Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in overdue_members %}
+                            <tr>
+                                <td>{{ item.member.member_id }}</td>
+                                <td>{{ item.member.first_name|default:'' }} {{ item.member.last_name|default:'' }}</td>
+                                <td>{{ item.member.email|default:'-' }}</td>
+                                <td>{{ item.member.phone|default:'-' }}</td>
+                                <td>{{ item.member.department|default:'-' }}</td>
+                                <td>{{ item.overdue_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center">No overdue members</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Unregistered Online Users</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fingerprint Hash</th>
+                                <th>Session Key (partial)</th>
+                                <th>Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anon in unregistered_users|slice:':20' %}
+                            <tr>
+                                <td>{{ anon.fingerprint_hash|slice:":20" }}...</td>
+                                <td>{{ anon.session_key|slice:":20" }}...</td>
+                                <td>{{ anon.last_activity|date:'M d, Y H:i' }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center">No unregistered session users</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

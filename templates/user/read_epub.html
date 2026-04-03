@@ -1,0 +1,48 @@
+{% extends 'user/base.html' %}
+
+{% block title %}Read EPUB - {{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Read EPUB: {{ book.title }}</h2>
+        <a class="btn btn-secondary" href="{% url 'user_book_detail' book_id=book.id %}">Back</a>
+    </div>
+
+    <div id="epub-reader" style="width:100%; height:80vh; border:1px solid #ddd;"></div>
+
+    <div class="mt-3">
+        <a class="btn btn-primary" href="{% url 'user_download_book' book_id=book.id %}" target="_blank">Download EPUB</a>
+        <button id="prev-page" class="btn btn-secondary">Previous</button>
+        <button id="next-page" class="btn btn-secondary">Next</button>
+    </div>
+
+    <script src="https://unpkg.com/epubjs/dist/epub.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var book = ePub('{{ book_url }}');
+            var rendition = book.renderTo('epub-reader', {
+                width: '100%',
+                height: '80vh'
+            });
+            rendition.display();
+
+            document.getElementById('prev-page').addEventListener('click', function() {
+                rendition.prev();
+            });
+            document.getElementById('next-page').addEventListener('click', function() {
+                rendition.next();
+            });
+
+            rendition.on('rendered', function(section) {
+                // Optionally, you can update current chapter info
+            });
+
+            rendition.on('error', function(err) {
+                console.error('EPUB render error', err);
+                document.getElementById('epub-reader').innerHTML = '<p>Unable to display EPUB in this browser. Use the download button.</p>';
+            });
+        });
+    </script>
+</div>
+{% endblock %}

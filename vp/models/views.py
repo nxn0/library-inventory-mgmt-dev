@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db.models import Q, Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import Resource, Category, Member, Transaction, StockLog
+from .models import Resource, UserBook, Category, Member, Transaction, StockLog
 from .forms import ResourceForm, CategoryForm, MemberForm, CheckoutForm, StockLogForm
 
 # ============= DASHBOARD =============
@@ -46,30 +46,42 @@ def dashboard(request):
 def resource_list(request):
     """List all resources with search and filter"""
     resources = Resource.objects.select_related('category').all()
-    
+    # Show all online books in legacy resource dashboard so admins can find pending items too.
+    online_books = UserBook.objects.all().order_by('-created_at')
+
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
         resources = resources.filter(
             Q(title__icontains=search_query) |
             Q(resource_id__icontains=search_query) |
-            Q(author__icontains=search_query)
+            Q(author__icontains=search_query) |
+            Q(category__name__icontains=search_query)
         )
-    
+        online_books = online_books.filter(
+            Q(title__icontains=search_query) |
+            Q(author__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
     # Filter by category
     category_id = request.GET.get('category', '')
     if category_id:
         resources = resources.filter(category_id=category_id)
-    
+
     # Filter by status
     status = request.GET.get('status', '')
     if status:
         resources = resources.filter(status=status)
-    
+
+    # Always show both offline and online resources in legacy dashboard.
+    book_type = 'all'
+
     categories = Category.objects.all()
-    
+
     context = {
         'resources': resources,
+        'online_books': online_books,
         'categories': categories,
         'search_query': search_query,
     }

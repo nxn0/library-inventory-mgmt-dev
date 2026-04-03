@@ -75,8 +75,7 @@
                             <td>
                                 {% if book.rating_avg %}
                                     <span class="text-warning">
-                                        {% for i in 'x'|rjust:book.rating_avg|as_string %}★{% endfor %}
-                                        ({{ book.rating_avg }})
+                                        ★ {{ book.rating_avg|floatformat:1 }} / 5
                                     </span>
                                 {% else %}
                                     <span class="text-muted">No ratings</span>
