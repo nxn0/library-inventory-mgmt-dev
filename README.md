@@ -87,4 +87,4 @@ The project combines traditional library inventory and checkout workflows with u
 - Admins verify or ban uploads before they appear in the public library
 - Reviews, ratings, views, and download counts are tracked
 
---
+---
